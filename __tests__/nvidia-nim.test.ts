@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { generateNvidiaNimText } from '../lib/ai/nvidia-nim';
+import { NvidiaNimProvider } from '../lib/ai/nvidia-nim';
 
 // Mock fetch for tests
 global.fetch = vi.fn();
@@ -15,7 +15,8 @@ describe('NvidiaNimProvider', () => {
       json: async () => mockResponse,
     });
 
-    const result = await generateNvidiaNimText('Hello, world!');
+    const provider = new NvidiaNimProvider();
+    const result = await provider.generateText('Hello, world!');
     
     expect(result).toBe('This is a mock response from Nvidia NIM.');
     expect(global.fetch).toHaveBeenCalledWith(
@@ -25,7 +26,7 @@ describe('NvidiaNimProvider', () => {
         headers: expect.objectContaining({
           'Content-Type': 'application/json',
         }),
-        body: expect.stringContaining('deepseek-v4.1-flash'),
+        body: expect.stringContaining('deepseek-ai/deepseek-v4.1-flash'),
       })
     );
   });
@@ -37,6 +38,7 @@ describe('NvidiaNimProvider', () => {
       statusText: 'Internal Server Error',
     });
 
-    await expect(generateNvidiaNimText('Hello')).rejects.toThrow('Nvidia NIM API error: 500 Internal Server Error');
+    const provider = new NvidiaNimProvider();
+    await expect(provider.generateText('Hello')).rejects.toThrow('NVIDIA NIM API Error: Internal Server Error');
   });
 });

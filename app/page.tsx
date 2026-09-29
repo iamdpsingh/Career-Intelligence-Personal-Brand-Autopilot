@@ -16,13 +16,22 @@ export default async function Dashboard() {
   // For V1 UI scaffolding, we bypass auth.
 
   // Fetch quick metrics for the dashboard
-  const pendingOpportunities = await db.select({ count: count() })
-    .from(contentCandidates)
-    .where(eq(contentCandidates.status, "IDEA"));
+  let pendingOpportunitiesCount = 0;
+  let pendingReviewsCount = 0;
 
-  const pendingReviews = await db.select({ count: count() })
-    .from(contentDrafts)
-    .where(eq(contentDrafts.status, "HUMAN_REVIEW"));
+  try {
+    const pendingOpportunities = await db.select({ count: count() })
+      .from(contentCandidates)
+      .where(eq(contentCandidates.status, "IDEA"));
+    pendingOpportunitiesCount = pendingOpportunities[0].count;
+
+    const pendingReviews = await db.select({ count: count() })
+      .from(contentDrafts)
+      .where(eq(contentDrafts.status, "HUMAN_REVIEW"));
+    pendingReviewsCount = pendingReviews[0].count;
+  } catch (error) {
+    console.warn("Database connection failed, using default counts for local monkey testing");
+  }
 
   return (
     <div className="flex h-screen bg-zinc-50 text-zinc-900">
@@ -39,17 +48,17 @@ export default async function Dashboard() {
           </Link>
           <Link href="/opportunities" className="block px-4 py-2 hover:bg-zinc-800 hover:text-white rounded-md">
             Opportunities
-            {pendingOpportunities[0].count > 0 && (
+            {pendingOpportunitiesCount > 0 && (
               <span className="ml-2 bg-blue-500 text-white text-xs px-2 py-0.5 rounded-full">
-                {pendingOpportunities[0].count}
+                {pendingOpportunitiesCount}
               </span>
             )}
           </Link>
           <Link href="/queue" className="block px-4 py-2 hover:bg-zinc-800 hover:text-white rounded-md">
             Queue
-            {pendingReviews[0].count > 0 && (
+            {pendingReviewsCount > 0 && (
               <span className="ml-2 bg-amber-500 text-zinc-900 text-xs px-2 py-0.5 rounded-full font-semibold">
-                {pendingReviews[0].count}
+                {pendingReviewsCount}
               </span>
             )}
           </Link>
@@ -77,7 +86,7 @@ export default async function Dashboard() {
               GitHub Intelligence
             </h3>
             <div className="flex items-end gap-2">
-              <span className="text-4xl font-bold text-zinc-900">{pendingOpportunities[0].count}</span>
+              <span className="text-4xl font-bold text-zinc-900">{pendingOpportunitiesCount}</span>
               <span className="text-sm text-zinc-500 mb-1">new stories</span>
             </div>
             <div className="mt-4">
@@ -93,7 +102,7 @@ export default async function Dashboard() {
               Action Required
             </h3>
             <div className="flex items-end gap-2">
-              <span className="text-4xl font-bold text-amber-500">{pendingReviews[0].count}</span>
+              <span className="text-4xl font-bold text-amber-500">{pendingReviewsCount}</span>
               <span className="text-sm text-zinc-500 mb-1">drafts to approve</span>
             </div>
             <div className="mt-4">

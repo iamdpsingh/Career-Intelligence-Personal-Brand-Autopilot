@@ -13,18 +13,22 @@ import { revalidatePath } from "next/cache";
 export const dynamic = 'force-dynamic';
 
 export default async function QueuePage() {
-  // Fetch drafts awaiting human approval
-  const drafts = await db
-    .select({
-      id: contentDrafts.id,
-      content: contentDrafts.content,
-      status: contentDrafts.status,
-      candidateTitle: contentCandidates.title,
-      sourceType: contentCandidates.sourceType,
-    })
-    .from(contentDrafts)
-    .innerJoin(contentCandidates, eq(contentDrafts.candidateId, contentCandidates.id))
-    .where(eq(contentDrafts.status, "HUMAN_REVIEW"));
+  let drafts: any[] = [];
+  try {
+    drafts = await db
+      .select({
+        id: contentDrafts.id,
+        content: contentDrafts.content,
+        status: contentDrafts.status,
+        candidateTitle: contentCandidates.title,
+        sourceType: contentCandidates.sourceType,
+      })
+      .from(contentDrafts)
+      .innerJoin(contentCandidates, eq(contentDrafts.candidateId, contentCandidates.id))
+      .where(eq(contentDrafts.status, "HUMAN_REVIEW"));
+  } catch (error) {
+    console.warn("Database connection failed, showing empty queue for local monkey testing");
+  }
 
   return (
     <div className="min-h-screen bg-zinc-50 p-8">
