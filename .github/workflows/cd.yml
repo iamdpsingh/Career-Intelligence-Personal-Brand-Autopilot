@@ -1,0 +1,20 @@
+name: Continuous Deployment (Vercel)
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      # Vercel handles automatic deployments on push to main, 
+      # but this workflow can be used for custom deployment hooks
+      # or running E2E tests against preview URLs before promoting.
+      
+      - name: Post Deploy Verification
+        run: |
+          echo "Deployment triggered on Vercel."
+          echo "Run smoke tests against production URL here."
