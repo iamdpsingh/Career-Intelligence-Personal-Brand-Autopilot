@@ -11,7 +11,7 @@ export class NvidiaNimProvider implements AIProvider {
   private apiKey: string;
   private baseUrl = "https://integrate.api.nvidia.com/v1";
 
-  constructor(modelName: string = "deepseek-ai/deepseek-coder-33b-instruct") {
+  constructor(modelName: string = "deepseek-ai/deepseek-v4.1-flash") {
     this.name = `NVIDIA NIM (${modelName})`;
     this.apiKey = process.env.NVIDIA_API_KEY || "";
     
@@ -29,7 +29,7 @@ export class NvidiaNimProvider implements AIProvider {
       },
       body: JSON.stringify({
         // Defaulting to deepseek-ai per user request for open source integration
-        model: "deepseek-ai/deepseek-coder-33b-instruct",
+        model: "deepseek-ai/deepseek-v4.1-flash",
         messages: [{ role: "user", content: prompt }],
         temperature: 0.7,
         max_tokens: 1024,
