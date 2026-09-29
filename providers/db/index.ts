@@ -1,15 +1,14 @@
-import { drizzle } from "drizzle-orm/node-postgres";
-import { Pool } from "pg";
+import { drizzle } from "drizzle-orm/better-sqlite3";
+import Database from "better-sqlite3";
 import * as schema from "./schema";
+import path from "path";
 
 /**
  * The core database connection instance.
- * It uses a connection pool for efficiency in serverless environments,
- * though Vercel Edge functions might require a different driver (like Neon HTTP)
- * if deployed to the Edge runtime. We are using standard node-postgres for Node runtimes.
+ * For local-first architecture, we use better-sqlite3 with a local sqlite file.
+ * This runs locally on the machine without needing any external database servers or Docker containers.
  */
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-});
+const dbPath = process.env.DATABASE_URL?.replace('sqlite://', '') || path.join(process.cwd(), "local.db");
+const sqlite = new Database(dbPath);
 
-export const db = drizzle(pool, { schema });
+export const db = drizzle(sqlite, { schema });

@@ -7,10 +7,10 @@ dotenv.config({ path: ".env.local" });
 export default defineConfig({
   schema: "./providers/db/schema.ts",
   out: "./providers/db/migrations",
-  dialect: "postgresql",
+  dialect: "sqlite",
   dbCredentials: {
-    url: process.env.DATABASE_URL || "postgres://localhost:5432/career_autopilot",
+    url: process.env.DATABASE_URL || "file:./local.db",
   },
   verbose: true,
-  strict: true,
+  strict: false,
 });
