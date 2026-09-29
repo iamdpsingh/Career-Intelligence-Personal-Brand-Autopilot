@@ -29,19 +29,7 @@ jobs:
   e2e-and-a11y-test:
     name: E2E & Accessibility Tests (Playwright)
     runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:15
-        env:
-          POSTGRES_PASSWORD: password
-          POSTGRES_DB: career_autopilot_test
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+
     steps:
       - uses: actions/checkout@v4
       - name: Setup Node.js
@@ -53,35 +41,23 @@ jobs:
         run: npm install --legacy-peer-deps
       - name: Push DB Schema
         env:
-          DATABASE_URL: postgresql://postgres:password@localhost:5432/career_autopilot_test
-        run: npx drizzle-kit push
+          DATABASE_URL: file:./local.db
+        run: npx drizzle-kit push --force
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps
       - name: Run Build
         env:
-          DATABASE_URL: postgresql://postgres:password@localhost:5432/career_autopilot_test
+          DATABASE_URL: file:./local.db
         run: npm run build
       - name: Run Playwright Tests
         env:
-          DATABASE_URL: postgresql://postgres:password@localhost:5432/career_autopilot_test
+          DATABASE_URL: file:./local.db
         run: npx playwright test
 
   load-test:
     name: Load Testing (k6)
     runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:15
-        env:
-          POSTGRES_PASSWORD: password
-          POSTGRES_DB: career_autopilot_test
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+
     steps:
       - uses: actions/checkout@v4
       - name: Install k6
@@ -99,11 +75,11 @@ jobs:
         run: npm install --legacy-peer-deps
       - name: Push DB Schema
         env:
-          DATABASE_URL: postgresql://postgres:password@localhost:5432/career_autopilot_test
-        run: npx drizzle-kit push
+          DATABASE_URL: file:./local.db
+        run: npx drizzle-kit push --force
       - name: Build & Start App
         env:
-          DATABASE_URL: postgresql://postgres:password@localhost:5432/career_autopilot_test
+          DATABASE_URL: file:./local.db
         run: |
           npm run build
           npm run start &
