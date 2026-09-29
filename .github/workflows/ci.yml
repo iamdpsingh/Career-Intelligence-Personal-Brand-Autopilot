@@ -1,4 +1,4 @@
-name: CI / Security Scanning
+name: Heavy SDLC Testing Pipeline
 
 on:
   push:
@@ -7,38 +7,81 @@ on:
     branches: [ main ]
 
 jobs:
-  build-and-test:
+  build-and-unit-test:
+    name: Build & Unit Tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
-          
       - name: Install dependencies
         run: npm install --legacy-peer-deps
-        
       - name: Run Linter
         run: npm run lint
-        
-      - name: Run Build (Validates TypeScript)
+      - name: Run Unit Tests with Coverage
+        run: npx vitest run --coverage
+      - name: Run Build
         run: npm run build
 
-  security-scan:
+  e2e-and-a11y-test:
+    name: E2E & Accessibility Tests (Playwright)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps
+      - name: Run Build
+        run: npm run build
+      - name: Run Playwright Tests
+        run: npx playwright test
+
+  load-test:
+    name: Load Testing (k6)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install k6
+        run: |
+          sudo gpg -k
+          sudo gpg --no-default-keyring --keyring /usr/share/keyrings/k6-archive-keyring.gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69
+          echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
+          sudo apt-get update
+          sudo apt-get install k6
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps
+      - name: Build & Start App
+        run: |
+          npm run build
+          npm run start &
+          sleep 10
+      - name: Run Load Test
+        run: k6 run k6/load-test.js
+
+  security-scan:
+    name: Security & SAST Scanning
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
       - name: Run npm audit
         run: npm audit --audit-level=high || true
-        
-      # - name: Initialize CodeQL
-      #   uses: github/codeql-action/init@v3
-      #   with:
-      #     languages: javascript
-          
-      # - name: Perform CodeQL Analysis
-      #   uses: github/codeql-action/analyze@v3
+      - name: Check for hardcoded secrets
+        run: npx detect-secrets-stream ./ || true
