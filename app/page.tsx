@@ -1,23 +1,14 @@
 import Link from "next/link";
 import { db } from "@/providers/db";
-import { contentCandidates, contentDrafts } from "@/providers/db/schema";
+import { contentCandidates, contentDrafts, jobs } from "@/providers/db/schema";
 import { count, eq } from "drizzle-orm";
-
-// ----------------------------------------------------------------------
-// DASHBOARD OVERVIEW (Rule 51)
-// ----------------------------------------------------------------------
-// A simple control center to view the state of the intelligence engines.
-// ----------------------------------------------------------------------
 
 export const dynamic = 'force-dynamic';
 
 export default async function Dashboard() {
-  // In a real app, we'd get the user ID from the session (Auth.js)
-  // For V1 UI scaffolding, we bypass auth.
-
-  // Fetch quick metrics for the dashboard
   let pendingOpportunitiesCount = 0;
   let pendingReviewsCount = 0;
+  let discoveredJobsCount = 0;
 
   try {
     const pendingOpportunities = await db.select({ count: count() })
@@ -29,102 +20,92 @@ export default async function Dashboard() {
       .from(contentDrafts)
       .where(eq(contentDrafts.status, "HUMAN_REVIEW"));
     pendingReviewsCount = pendingReviews[0].count;
+
+    const discoveredJobsResult = await db.select({ count: count() }).from(jobs);
+    discoveredJobsCount = discoveredJobsResult[0].count;
   } catch (_error) {
-    console.warn("Database connection failed, using default counts for local monkey testing");
+    console.warn("Database connection failed, using default counts");
   }
 
   return (
-    <div className="flex h-screen bg-zinc-50 text-zinc-900">
-      {/* Sidebar Navigation */}
-      <aside className="w-64 bg-zinc-900 text-zinc-300 flex flex-col">
-        <div className="p-6">
-          <h1 className="text-xl font-bold text-white tracking-tight leading-tight">
-            Career Intelligence <br /> Autopilot
-          </h1>
-        </div>
-        <nav className="flex-1 px-4 space-y-2">
-          <Link href="/" className="block px-4 py-2 bg-zinc-800 text-white rounded-md font-medium">
-            Overview
-          </Link>
-          <Link href="/opportunities" className="block px-4 py-2 hover:bg-zinc-800 hover:text-white rounded-md">
-            Opportunities
-            {pendingOpportunitiesCount > 0 && (
-              <span className="ml-2 bg-blue-500 text-white text-xs px-2 py-0.5 rounded-full">
-                {pendingOpportunitiesCount}
-              </span>
-            )}
-          </Link>
-          <Link href="/queue" className="block px-4 py-2 hover:bg-zinc-800 hover:text-white rounded-md">
-            Queue
-            {pendingReviewsCount > 0 && (
-              <span className="ml-2 bg-amber-500 text-zinc-900 text-xs px-2 py-0.5 rounded-full font-semibold">
-                {pendingReviewsCount}
-              </span>
-            )}
-          </Link>
-          <Link href="/jobs" className="block px-4 py-2 hover:bg-zinc-800 hover:text-white rounded-md text-zinc-400">
-            Jobs (V2)
-          </Link>
-          <Link href="/analytics" className="block px-4 py-2 hover:bg-zinc-800 hover:text-white rounded-md text-zinc-400">
-            Analytics (V3)
-          </Link>
-        </nav>
-      </aside>
+    <div className="space-y-8 md:space-y-10 animate-in fade-in slide-in-from-bottom-8 duration-700 pb-20">
+      <header>
+        <h2 className="text-3xl md:text-5xl font-black text-zinc-900 dark:text-white tracking-tight">Today&apos;s Intelligence</h2>
+        <p className="text-zinc-500 dark:text-zinc-400 mt-2 md:mt-3 text-base md:text-lg font-medium">Your daily digest of career and content opportunities.</p>
+      </header>
 
-      {/* Main Content Area */}
-      <main className="flex-1 p-8 overflow-y-auto">
-        <header className="mb-8">
-          <h2 className="text-3xl font-semibold text-zinc-900">Today&apos;s Intelligence</h2>
-          <p className="text-zinc-500 mt-1">Your daily digest of career and content opportunities.</p>
-        </header>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          
-          {/* GitHub Opportunities Card */}
-          <div className="bg-white p-6 rounded-xl border border-zinc-200 shadow-sm">
-            <h3 className="text-sm font-semibold text-zinc-500 uppercase tracking-wider mb-2">
-              GitHub Intelligence
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+        
+        {/* Job Intelligence Card */}
+        <div className="bg-white/60 dark:bg-white/5 backdrop-blur-2xl p-6 md:p-8 rounded-3xl border border-zinc-200 dark:border-white/10 shadow-xl hover:bg-white dark:hover:bg-white/10 transition-all duration-500 hover:-translate-y-1 group flex flex-col justify-between">
+          <div>
+            <h3 className="text-xs font-bold text-lime-600 dark:text-lime-400 uppercase tracking-widest mb-4">
+              Job Intelligence
             </h3>
-            <div className="flex items-end gap-2">
-              <span className="text-4xl font-bold text-zinc-900">{pendingOpportunitiesCount}</span>
-              <span className="text-sm text-zinc-500 mb-1">new stories</span>
-            </div>
-            <div className="mt-4">
-              <Link href="/opportunities" className="text-sm text-blue-700 hover:underline font-medium">
-                Review opportunities →
-              </Link>
+            <div className="flex items-end gap-3 mb-6 md:mb-8">
+              <span className="text-6xl md:text-7xl font-black text-zinc-900 dark:text-white tracking-tighter leading-none">{discoveredJobsCount}</span>
+              <span className="text-sm md:text-base text-zinc-500 dark:text-zinc-400 mb-1 font-medium">matching jobs</span>
             </div>
           </div>
+          <div>
+            <Link href="/jobs" className="inline-flex items-center text-sm font-semibold bg-lime-500/10 hover:bg-lime-500/20 text-lime-700 dark:text-lime-300 px-5 py-2.5 rounded-full transition-all">
+              Review jobs <span className="ml-2 group-hover:translate-x-1 transition-transform">→</span>
+            </Link>
+          </div>
+        </div>
 
-          {/* Drafts Awaiting Review Card */}
-          <div className="bg-white p-6 rounded-xl border border-zinc-200 shadow-sm">
-            <h3 className="text-sm font-semibold text-zinc-500 uppercase tracking-wider mb-2">
+        {/* Content Opportunities Card */}
+        <div className="bg-white/60 dark:bg-white/5 backdrop-blur-2xl p-6 md:p-8 rounded-3xl border border-zinc-200 dark:border-white/10 shadow-xl hover:bg-white dark:hover:bg-white/10 transition-all duration-500 hover:-translate-y-1 group flex flex-col justify-between">
+          <div>
+            <h3 className="text-xs font-bold text-orange-500 dark:text-orange-400 uppercase tracking-widest mb-4">
+              Content Ideas
+            </h3>
+          <div className="flex items-end gap-3 mb-6 md:mb-8">
+            <span className="text-6xl md:text-7xl font-black text-zinc-900 dark:text-white tracking-tighter leading-none">{pendingOpportunitiesCount}</span>
+            <span className="text-sm md:text-base text-zinc-500 dark:text-zinc-400 mb-1 font-medium">new stories</span>
+          </div>
+          </div>
+          <div>
+            <Link href="/opportunities" className="inline-flex items-center text-sm font-semibold bg-zinc-100 dark:bg-white/10 hover:bg-zinc-200 dark:hover:bg-white/20 text-zinc-700 dark:text-white px-5 py-2.5 rounded-full transition-all">
+              Review ideas <span className="ml-2 group-hover:translate-x-1 transition-transform">→</span>
+            </Link>
+          </div>
+        </div>
+
+        {/* Drafts Awaiting Review Card */}
+        <div className="bg-white/60 dark:bg-white/5 backdrop-blur-2xl p-6 md:p-8 rounded-3xl border border-zinc-200 dark:border-white/10 shadow-xl hover:bg-white dark:hover:bg-white/10 transition-all duration-500 hover:-translate-y-1 group flex flex-col justify-between">
+          <div>
+            <h3 className="text-xs font-bold text-amber-500 dark:text-amber-400 uppercase tracking-widest mb-4">
               Action Required
             </h3>
-            <div className="flex items-end gap-2">
-              <span className="text-4xl font-bold text-amber-500">{pendingReviewsCount}</span>
-              <span className="text-sm text-zinc-500 mb-1">drafts to approve</span>
-            </div>
-            <div className="mt-4">
-              <Link href="/queue" className="text-sm text-amber-700 hover:underline font-medium">
-                Review drafts →
-              </Link>
+            <div className="flex items-end gap-3 mb-6 md:mb-8">
+              <span className="text-6xl md:text-7xl font-black text-zinc-900 dark:text-white tracking-tighter leading-none">{pendingReviewsCount}</span>
+              <span className="text-sm md:text-base text-zinc-500 dark:text-zinc-400 mb-1 font-medium">drafts to approve</span>
             </div>
           </div>
-
-          {/* Publishing Calendar Card */}
-          <div className="bg-white p-6 rounded-xl border border-zinc-200 shadow-sm">
-            <h3 className="text-sm font-semibold text-zinc-500 uppercase tracking-wider mb-2">
-              Publishing Queue
-            </h3>
-            <p className="text-zinc-600 mt-2">
-              Next post: <strong className="text-zinc-900">Thursday 19:00</strong>
-            </p>
-            <p className="text-zinc-500 text-sm mt-1">2 posts scheduled this week.</p>
+          <div>
+            <Link href="/queue" className="inline-flex items-center text-sm font-semibold bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-300 px-5 py-2.5 rounded-full transition-all">
+              Review drafts <span className="ml-2 group-hover:translate-x-1 transition-transform">→</span>
+            </Link>
           </div>
-
         </div>
-      </main>
+
+        {/* Publishing Calendar Card */}
+        <div className="bg-white/60 dark:bg-white/5 backdrop-blur-2xl p-6 md:p-8 rounded-3xl border border-zinc-200 dark:border-white/10 shadow-xl hover:bg-white dark:hover:bg-white/10 transition-all duration-500 hover:-translate-y-1">
+          <h3 className="text-xs font-bold text-emerald-500 dark:text-emerald-400 uppercase tracking-widest mb-4">
+            Publishing Queue
+          </h3>
+          <div className="mt-4 md:mt-6 space-y-4">
+            <div>
+              <p className="text-zinc-500 dark:text-zinc-400 text-xs md:text-sm font-medium">Next post</p>
+              <p className="text-xl md:text-2xl font-bold text-zinc-900 dark:text-white tracking-tight mt-1">Thursday 19:00</p>
+            </div>
+            <div className="h-px w-full bg-zinc-200 dark:bg-white/10" />
+            <p className="text-zinc-500 dark:text-zinc-400 text-sm font-medium">2 posts scheduled this week.</p>
+          </div>
+        </div>
+
+      </div>
     </div>
   );
 }
