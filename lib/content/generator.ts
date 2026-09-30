@@ -51,17 +51,22 @@ export class ContentGenerator {
       throw new Error(`Candidate ${candidateId} is not in IDEA state or does not exist.`);
     }
 
-    if (candidate.sourceType !== "github" || !candidate.sourceId) {
-      throw new Error(`Currently only GitHub evidence generation is implemented (V1).`);
+    if (candidate.sourceType !== "github" && candidate.sourceType !== "TECH_NEWS") {
+      throw new Error(`Currently only GitHub evidence and Tech News generation are implemented.`);
     }
 
-    const evidence = await db.query.githubEvidence.findFirst({
-      where: eq(githubEvidence.id, candidate.sourceId)
-    });
+    let evidenceClaim = candidate.title;
+    let evidenceFiles: string[] = [];
 
-    if (!evidence) {
-      // TRUTH ENGINE FAIL-SAFE: Cannot generate without evidence.
-      throw new Error(`No evidence found for candidate ${candidateId}. Aborting generation.`);
+    if (candidate.sourceType === "github" && candidate.sourceId) {
+      const evidence = await db.query.githubEvidence.findFirst({
+        where: eq(githubEvidence.id, candidate.sourceId)
+      });
+      if (!evidence) {
+        throw new Error(`No evidence found for candidate ${candidateId}. Aborting generation.`);
+      }
+      evidenceClaim = evidence.claim;
+      evidenceFiles = (evidence.fileReferences as string[]) || [];
     }
 
     // ------------------------------------------------------------------
@@ -70,9 +75,9 @@ export class ContentGenerator {
     console.log(`[Content Lab] Stage 1: Determining Story Angle...`);
     const anglePrompt = `
       You are a Senior Data/Software Engineer.
-      Review the following verified technical evidence:
-      Claim: ${evidence.claim}
-      Files Changed: ${(evidence.fileReferences as string[] || []).join(", ")}
+      Review the following verified technical evidence or tech trend:
+      Claim/Topic: ${evidenceClaim}
+      Files Changed/Sources: ${evidenceFiles.join(", ")}
       
       Determine the best angle for a technical post. Avoid generic hype.
       Focus on Problem -> Solution or Technical Lessons learned.
@@ -85,8 +90,8 @@ export class ContentGenerator {
     console.log(`[Content Lab] Stage 2: Drafting...`);
     const draftPrompt = `
       Write a short, highly technical LinkedIn post based strictly on this evidence:
-      Claim: ${evidence.claim}
-      Files: ${(evidence.fileReferences as string[] || []).join(", ")}
+      Claim/Topic: ${evidenceClaim}
+      Files/Sources: ${evidenceFiles.join(", ")}
       
       Follow this structure:
       Hook: ${angle.hook}
@@ -106,9 +111,9 @@ export class ContentGenerator {
     // ------------------------------------------------------------------
     console.log(`[Content Lab] Stage 3: Automated Review...`);
     const reviewPrompt = `
-      Review the following draft against the original evidence.
+      Review the following draft against the original evidence or tech trend.
       
-      Evidence Claim: ${evidence.claim}
+      Original Claim/Topic: ${evidenceClaim}
       Draft: ${draftText}
       
       Does the draft invent any facts? Is it overly promotional?
