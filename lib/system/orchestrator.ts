@@ -194,10 +194,16 @@ export async function runFullCycle(trigger: "local-daemon" | "vercel-cron" | "ma
         const [owner, repoName] = repo.name.split("/");
         if (!owner || !repoName) continue;
 
+        const syncTime = new Date(); // Capture time BEFORE fetching to prevent missing commits
         const evidenceCount = await githubIntel.analyzeRecentCommits(
           userId, repo.id, owner, repoName, repo.lastSyncAt || undefined
         );
         totalEvidence += evidenceCount;
+        
+        // Update lastSyncAt so we only fetch new commits next time
+        await db.update(repositories)
+          .set({ lastSyncAt: syncTime })
+          .where(eq(repositories.id, repo.id));
       } catch (repoError) {
         // Spec Point 25: One repo failing doesn't kill the whole pipeline
         console.error(`[Orchestrator] Failed to scan repo ${repo.name}:`, repoError);
