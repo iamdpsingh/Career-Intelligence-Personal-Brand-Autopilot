@@ -62,22 +62,6 @@ export class JobIntelligence {
 
         if (insertedJob) {
           newJobsCount++;
-
-          // 4. If it's a high-profile company or matches perfectly, create a Content Candidate
-          // This allows the AI to draft a post about market trends.
-          if (this.isNotableJob({ company: insertedJob.company, skills: insertedJob.skills ?? undefined })) {
-            await db.insert(contentCandidates).values({
-              userId,
-              sourceType: "JOB_POSTING",
-              sourceId: insertedJob.id,
-              title: `Market Trend: ${insertedJob.company} hiring ${insertedJob.jobTitle} with ${insertedJob.skills?.[0]}`,
-              scoreEvidence: 80, // High because it's a real job posting
-              scoreRelevance: 85,
-              scoreFreshness: 95,
-              status: "IDEA",
-            });
-            console.log(`[JobIntelligence] Promoted job at ${insertedJob.company} to Content Candidate.`);
-          }
         }
       } catch (error) {
         console.error(`[JobIntelligence] Failed to process job ${job.url}:`, error);
@@ -87,29 +71,47 @@ export class JobIntelligence {
     console.log(`[JobIntelligence] Scan complete. Found ${newJobsCount} new jobs.`);
   }
 
-  /**
-   * Evaluates if a job is interesting enough to post about.
-   */
-  private isNotableJob(job: { company: string; skills?: string[] }): boolean {
-    const notableCompanies = ["Google", "Meta", "Netflix", "Amazon", "Apple", "Stripe", "Vercel", "OpenAI"];
-    return notableCompanies.includes(job.company) || (job.skills ? job.skills.length > 3 : false);
-  }
+
 
   /**
-   * Simulates fetching jobs from an API or scraper.
+   * Fetches real jobs from Remotive's free public API, which focuses on remote jobs.
    */
   private async fetchJobsFromSource(role: string, skill: string, locationFilter: string, salaryFilter: string, timeFilter: string) {
-    // Generate a deterministic date based on today so we don't create infinitely many jobs, 
-    // but we do show fresh ones on a new day.
-    const todayStr = new Date().toISOString().split('T')[0];
+    // Build search query from role and primary skill
+    const searchTerms = [];
+    if (role) searchTerms.push(role);
+    if (skill) searchTerms.push(skill);
     
-    // Adjust mock data to visually reflect the user's filters
-    const mockLocation = locationFilter !== "worldwide" && locationFilter !== "any" ? locationFilter : "San Francisco, CA";
-    const mockSalary = salaryFilter !== "any" ? salaryFilter : "$180k - $220k";
-
-    // Fake data generation removed per user request.
-    // In production, integrate with a real Job Board API (e.g. LinkedIn, Greenhouse) here.
-    return [];
+    const searchParam = searchTerms.join(' ').trim();
+    const encodedSearch = encodeURIComponent(searchParam);
+    
+    // Using Remotive's free public API (No auth required, heavily remote focused)
+    const url = `https://remotive.com/api/remote-jobs?category=software-dev&limit=30${encodedSearch ? `&search=${encodedSearch}` : ''}`;
+    
+    try {
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch from Remotive: ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      const rawJobs = data.jobs || [];
+      
+      return rawJobs.map((j: any) => ({
+        title: j.title,
+        company: j.company_name,
+        location: j.candidate_required_location || 'Worldwide',
+        remote: true, // All jobs on Remotive are remote
+        salary: j.salary || "UNKNOWN",
+        url: j.url,
+        description: j.description || j.title,
+        postedAt: j.publication_date || new Date().toISOString(),
+        skills: j.tags || []
+      }));
+    } catch (error) {
+      console.error(`[JobIntelligence] Error fetching from free job API:`, error);
+      return [];
+    }
   }
 }
 
