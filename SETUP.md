@@ -33,51 +33,61 @@ npm run start:daemon
 
 ## Environment Variables
 
-Create a `.env` file in the project root:
+The project uses a `.env` file for secrets. You must copy the provided `.env.example` to `.env` and fill in your actual credentials.
+
+> **Note**: Do not fill your real credentials into `.env.example`. Keep `.env.example` as a template (it is tracked by Git) and put your real secrets only in `.env` (which is ignored by Git).
 
 ```bash
-# Required for GitHub Intelligence Engine
-GITHUB_TOKEN=ghp_your_github_personal_access_token
+# 1. AI PROVIDERS (Rule 18, 36)
+OPENAI_API_KEY="sk-proj-..."
+# ANTHROPIC_API_KEY="sk-ant-..."
+# GROQ_API_KEY="gsk_..."
 
-# Required for LinkedIn Publishing
-LINKEDIN_CLIENT_ID=your_linkedin_app_client_id
-LINKEDIN_CLIENT_SECRET=your_linkedin_app_client_secret
-LINKEDIN_ACCESS_TOKEN=your_linkedin_oauth_access_token
+# NVIDIA API for Image Generation (V2)
+# NVIDIA_API_KEY="nvapi-..."
 
-# Required for AI Content Generation (choose one or more)
-NVIDIA_NIM_API_KEY=your_nvidia_nim_key  # Primary (free tier available)
-OPENAI_API_KEY=sk-your-openai-key      # Fallback
+# Spend limits
+MAX_AI_SPEND_PER_MONTH_USD=0.00
 
-# Database (SQLite - no config needed for local mode)
-DATABASE_URL=file:./data/local.db
+# 2. DATABASE (Rule 23)
+DATABASE_URL="./local.db"
 
-# Vercel Cron Security (only needed for Vercel deployment)
-CRON_SECRET=your_random_secret_string
+# 3. CRON SECURITY (Rule 03, 33)
+CRON_SECRET="your_secure_random_string_here"
 
-# Mode: "local" or "vercel"
-DEPLOYMENT_MODE=local
+# 4. GITHUB APP (V2)
+# GITHUB_CLIENT_ID="..."
+# GITHUB_CLIENT_SECRET="..."
+
+# 5. LINKEDIN APP (V2)
+# LINKEDIN_CLIENT_ID="..."
+# LINKEDIN_CLIENT_SECRET="..."
 ```
 
 ### Getting API Keys
 
-#### GitHub Personal Access Token
-1. Go to https://github.com/settings/tokens
-2. Click "Generate new token (classic)"
-3. Select scopes: `repo`, `read:user`, `read:org`
-4. Copy the token to `GITHUB_TOKEN`
+#### AI Providers
+1. **OpenAI**: Go to [OpenAI API Keys](https://platform.openai.com/api-keys) and generate a new secret key.
+2. **Anthropic** (Optional): Go to [Anthropic Console](https://console.anthropic.com/settings/keys) and generate a key.
+3. **Groq** (Optional): Go to [GroqCloud](https://console.groq.com/keys) for ultra-fast Llama/Mixtral inference.
+4. **NVIDIA** (Optional, for Image Gen): Go to [build.nvidia.com](https://build.nvidia.com/), sign up, and generate an API key.
 
-#### LinkedIn OAuth
-1. Go to https://www.linkedin.com/developers/
-2. Create an app (or use existing one)
-3. Under "Auth" tab, get Client ID and Client Secret
-4. Under "Products" tab, request access to "Share on LinkedIn"
-5. Generate an access token with `w_member_social` scope
+#### Database
+By default, the project runs on **SQLite locally**. `DATABASE_URL` should be `./local.db`. You do not need to set up an external database. 
 
-#### NVIDIA NIM (Recommended - Free Tier)
-1. Go to https://build.nvidia.com/
-2. Sign up for a free account
-3. Navigate to any model, click "Get API Key"
-4. Copy the key to `NVIDIA_NIM_API_KEY`
+#### Cron Security
+1. For `CRON_SECRET`, simply generate a random string, e.g. run `openssl rand -hex 32` in your terminal and paste the result. This secures manual local cron invocations.
+
+#### GitHub App (Optional for OAuth)
+1. Go to [GitHub Developer Settings](https://github.com/settings/developers).
+2. Create a "New GitHub App".
+3. Retrieve your `Client ID` and generate a `Client Secret`.
+
+#### LinkedIn App (Required for Publishing)
+1. Go to [LinkedIn Developers](https://www.linkedin.com/developers/).
+2. Create an App and verify it with your Company Page/Profile.
+3. Under the "Auth" tab, retrieve your `Client ID` and `Client Secret`.
+4. Request access to the "Share on LinkedIn" and "Sign In with LinkedIn v2" products under the "Products" tab.
 
 ## Running Tests
 
