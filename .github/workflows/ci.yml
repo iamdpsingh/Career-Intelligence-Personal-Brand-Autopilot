@@ -28,6 +28,9 @@ jobs:
       - name: Run Build
         env:
           DATABASE_URL: ./local.db
+          # Stub required env vars so the build doesn't crash without real secrets
+          GROQ_API_KEY: stub-key-for-build
+          GITHUB_TOKEN: stub-token-for-build
         run: npm run build
 
   e2e-and-a11y-test:
@@ -48,11 +51,21 @@ jobs:
           DATABASE_URL: ./local.db
         run: npx drizzle-kit push --force
       - name: Install Playwright Browsers
-        run: npx playwright install --with-deps
-      - name: Run Build
+        run: npx playwright install --with-deps chromium
+      - name: Build App
         env:
           DATABASE_URL: ./local.db
+          GROQ_API_KEY: stub-key-for-build
+          GITHUB_TOKEN: stub-token-for-build
         run: npm run build
+      - name: Start App & Wait
+        env:
+          DATABASE_URL: ./local.db
+          GROQ_API_KEY: stub-key-for-build
+          GITHUB_TOKEN: stub-token-for-build
+        run: |
+          npm run start &
+          npx wait-on http://localhost:3000 --timeout 30000
       - name: Run Playwright Tests
         env:
           DATABASE_URL: ./local.db
@@ -84,10 +97,12 @@ jobs:
       - name: Build & Start App
         env:
           DATABASE_URL: ./local.db
+          GROQ_API_KEY: stub-key-for-build
+          GITHUB_TOKEN: stub-token-for-build
         run: |
           npm run build
           npm run start &
-          sleep 10
+          npx wait-on http://localhost:3000 --timeout 30000
       - name: Run Load Test
         run: k6 run k6/load-test.js
 

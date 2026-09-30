@@ -26,14 +26,14 @@ export default async function QueuePage() {
   return (
     <div className="space-y-8 md:space-y-10 animate-in fade-in slide-in-from-bottom-8 duration-700 pb-20">
       <header>
-        <h2 className="text-3xl md:text-5xl font-black text-zinc-900 dark:text-white tracking-tight">Content Queue</h2>
+        <h1 className="text-3xl md:text-5xl font-black text-zinc-900 dark:text-white tracking-tight">Content Queue</h1>
         <p className="text-zinc-500 dark:text-zinc-400 mt-2 md:mt-3 text-base md:text-lg font-medium">Review, approve, or reject AI-generated drafts.</p>
       </header>
 
       <div className="space-y-4 md:space-y-6">
         {drafts.length === 0 ? (
           <div className="bg-white/60 dark:bg-white/5 backdrop-blur-2xl p-8 md:p-12 text-center rounded-3xl border border-zinc-200 dark:border-white/10 shadow-xl">
-            <h3 className="text-xl font-bold text-zinc-900 dark:text-white">You&apos;re all caught up!</h3>
+            <h2 className="text-xl font-bold text-zinc-900 dark:text-white">You&apos;re all caught up!</h2>
             <p className="text-zinc-500 dark:text-zinc-400 mt-2 font-medium">No drafts are currently awaiting human review.</p>
           </div>
         ) : (
@@ -44,7 +44,7 @@ export default async function QueuePage() {
                   <span className="bg-orange-500/10 dark:bg-orange-500/20 text-orange-700 dark:text-orange-300 border border-orange-500/20 dark:border-orange-500/30 text-xs font-bold px-3 py-1.5 rounded-full uppercase tracking-wider shadow-sm shrink-0">
                     {draft.sourceType}
                   </span>
-                  <h3 className="font-bold text-zinc-900 dark:text-white text-base md:text-lg">{draft.candidateTitle}</h3>
+                  <h2 className="font-bold text-zinc-900 dark:text-white text-base md:text-lg">{draft.candidateTitle}</h2>
                 </div>
                 <span className="text-xs font-bold text-amber-800 dark:text-amber-300 bg-amber-500/10 dark:bg-amber-500/20 px-3 py-1.5 rounded-full border border-amber-500/20 dark:border-amber-500/30 shadow-sm whitespace-nowrap">
                   AWAITING APPROVAL
@@ -64,25 +64,31 @@ export default async function QueuePage() {
                   await db.update(contentDrafts).set({ status: "APPROVED" }).where(eq(contentDrafts.id, draft.id));
                   revalidatePath('/queue');
                 }}>
-                  <button className="bg-white dark:bg-white/10 hover:bg-zinc-100 dark:hover:bg-white/20 text-zinc-900 dark:text-white font-bold py-2 md:py-2.5 px-4 md:px-6 rounded-xl shadow-sm md:shadow-lg border border-zinc-200 dark:border-white/10 transition-all text-sm md:text-base">
+                  <button
+                    type="submit"
+                    aria-label="Approve draft to queue"
+                    className="bg-white dark:bg-white/10 hover:bg-zinc-100 dark:hover:bg-white/20 text-zinc-900 dark:text-white font-bold py-2 md:py-2.5 px-4 md:px-6 rounded-xl shadow-sm md:shadow-lg border border-zinc-200 dark:border-white/10 transition-all text-sm md:text-base"
+                  >
                     Approve to Queue
                   </button>
                 </form>
 
                 <form action={async () => {
                   "use server";
-                  // Schedule for 9 AM tomorrow
                   const tomorrow = new Date();
                   tomorrow.setDate(tomorrow.getDate() + 1);
                   tomorrow.setHours(9, 0, 0, 0);
-
                   await db.update(contentDrafts).set({ 
                     status: "SCHEDULED",
                     scheduledFor: tomorrow
                   }).where(eq(contentDrafts.id, draft.id));
                   revalidatePath('/queue');
                 }}>
-                  <button className="bg-lime-500 hover:bg-lime-600 dark:bg-lime-600 dark:hover:bg-lime-500 text-zinc-950 font-black py-2 md:py-2.5 px-4 md:px-6 rounded-xl shadow-md shadow-lime-500/20 transition-all text-sm md:text-base border-0">
+                  <button
+                    type="submit"
+                    aria-label="Schedule draft for tomorrow morning"
+                    className="bg-lime-500 hover:bg-lime-600 dark:bg-lime-600 dark:hover:bg-lime-500 text-zinc-950 font-black py-2 md:py-2.5 px-4 md:px-6 rounded-xl shadow-md shadow-lime-500/20 transition-all text-sm md:text-base border-0"
+                  >
                     Schedule
                   </button>
                 </form>
@@ -92,7 +98,11 @@ export default async function QueuePage() {
                   await db.update(contentDrafts).set({ status: "PUBLISHING" }).where(eq(contentDrafts.id, draft.id));
                   revalidatePath('/queue');
                 }}>
-                  <button className="bg-orange-500 hover:bg-orange-600 dark:bg-orange-600 dark:hover:bg-orange-500 text-zinc-950 font-bold py-2 md:py-2.5 px-4 md:px-6 rounded-xl shadow-md shadow-orange-500/30 transition-all text-sm md:text-base border-0">
+                  <button
+                    type="submit"
+                    aria-label="Post draft now"
+                    className="bg-orange-500 hover:bg-orange-600 dark:bg-orange-600 dark:hover:bg-orange-500 text-zinc-950 font-bold py-2 md:py-2.5 px-4 md:px-6 rounded-xl shadow-md shadow-orange-500/30 transition-all text-sm md:text-base border-0"
+                  >
                     Post Now
                   </button>
                 </form>
@@ -104,7 +114,11 @@ export default async function QueuePage() {
                   await db.update(contentDrafts).set({ status: "REJECTED" }).where(eq(contentDrafts.id, draft.id));
                   revalidatePath('/queue');
                 }}>
-                  <button className="bg-transparent hover:bg-red-50 dark:hover:bg-red-500/10 text-red-600 dark:text-red-400 font-bold border border-red-200 dark:border-red-500/30 py-2 md:py-2.5 px-4 md:px-6 rounded-xl transition-all text-sm md:text-base">
+                  <button
+                    type="submit"
+                    aria-label="Reject draft"
+                    className="bg-transparent hover:bg-red-50 dark:hover:bg-red-500/10 text-red-600 dark:text-red-400 font-bold border border-red-200 dark:border-red-500/30 py-2 md:py-2.5 px-4 md:px-6 rounded-xl transition-all text-sm md:text-base"
+                  >
                     Reject
                   </button>
                 </form>

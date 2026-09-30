@@ -200,6 +200,19 @@ export async function runFullCycle(trigger: "local-daemon" | "vercel-cron" | "ma
         const [owner, repoName] = repo.name.split("/");
         if (!owner || !repoName) continue;
 
+        // ─── 24-HOUR COOLDOWN (one summary per repo per day) ───────────────
+        if (repo.lastSyncAt) {
+          const hoursSinceLastSync =
+            (Date.now() - new Date(repo.lastSyncAt).getTime()) / (1000 * 60 * 60);
+          if (hoursSinceLastSync < 24) {
+            console.log(
+              `[Orchestrator] Skipping ${repo.name} — synced ${hoursSinceLastSync.toFixed(1)}h ago (< 24h cooldown)`
+            );
+            continue;
+          }
+        }
+        // ───────────────────────────────────────────────────────────────────
+
         const syncTime = new Date(); // Capture time BEFORE fetching to prevent missing commits
         const evidenceCount = await githubIntel.analyzeRecentCommits(
           userId, repo.id, owner, repoName, repo.lastSyncAt || undefined
@@ -239,12 +252,28 @@ export async function runFullCycle(trigger: "local-daemon" | "vercel-cron" | "ma
   }
 
   // --- PIPELINE 3: JOB INTELLIGENCE (Spec Point 13) ---
+  // Jobs scan: once every 24 hours max (track via last automation run time)
   try {
     console.log(`\n[Orchestrator] ▶ Pipeline 3: Job Intelligence`);
-    const jobIntel = new JobIntelligence();
-    await jobIntel.scanForOpportunities(userId);
-    results.jobs = { success: true, jobsFound: 0 };
-    console.log(`[Orchestrator] ✓ Job Intelligence complete`);
+    
+    // Check if jobs were scanned recently (within 24h)
+    const lastJobRun = await db.query.automationRuns.findFirst({
+      where: eq(automationRuns.status, "success"),
+      orderBy: (runs, { desc }) => [desc(runs.finishedAt)],
+    });
+    const hoursSinceLastRun = lastJobRun?.finishedAt
+      ? (Date.now() - new Date(lastJobRun.finishedAt).getTime()) / (1000 * 60 * 60)
+      : 999;
+
+    if (hoursSinceLastRun < 23) {
+      console.log(`[Orchestrator] Skipping Job scan — last full cycle ran ${hoursSinceLastRun.toFixed(1)}h ago (< 23h cooldown)`);
+      results.jobs = { success: true, jobsFound: 0 };
+    } else {
+      const jobIntel = new JobIntelligence();
+      await jobIntel.scanForOpportunities(userId);
+      results.jobs = { success: true, jobsFound: 0 };
+      console.log(`[Orchestrator] ✓ Job Intelligence complete`);
+    }
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error);
     results.jobs = { success: false, jobsFound: 0, error: msg };
