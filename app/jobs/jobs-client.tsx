@@ -132,7 +132,7 @@ export function JobsClient({ jobs, profile }: { jobs: any[], profile?: any }) {
   return (
     <div className="space-y-8">
       {/* Filters Section */}
-      <div className="bg-white/60 dark:bg-white/5 backdrop-blur-2xl p-6 rounded-3xl border border-zinc-200 dark:border-white/10 shadow-lg flex flex-wrap gap-6 items-end">
+      <div className="relative z-20 bg-white/60 dark:bg-white/5 backdrop-blur-2xl p-6 rounded-3xl border border-zinc-200 dark:border-white/10 shadow-lg flex flex-wrap gap-6 items-end">
         
         {/* Time Filter */}
         <div className="w-full md:w-auto">
