@@ -23,7 +23,7 @@ export function ProfileForm({ profile }: { profile: any }) {
   const [currency, setCurrency] = useState<string[]>(profile?.currency || []);
 
   const locationOptions = ["remote", "worldwide", "usa", "uk", "eu", "asia", "india"];
-  let salaryOptions: string[] = [];
+  const salaryOptions: string[] = [];
   if (currency.length === 0 || currency.some(c => ["USD", "EUR", "GBP", "CAD"].includes(c))) {
     salaryOptions.push("0-50k", "50k-100k", "100k-150k", "150k-200k", "200k+");
   }

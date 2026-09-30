@@ -46,7 +46,7 @@ export default async function QueuePage() {
                   </span>
                   <h3 className="font-bold text-zinc-900 dark:text-white text-base md:text-lg">{draft.candidateTitle}</h3>
                 </div>
-                <span className="text-xs font-bold text-amber-700 dark:text-amber-300 bg-amber-500/10 dark:bg-amber-500/20 px-3 py-1.5 rounded-full border border-amber-500/20 dark:border-amber-500/30 shadow-sm whitespace-nowrap">
+                <span className="text-xs font-bold text-amber-800 dark:text-amber-300 bg-amber-500/10 dark:bg-amber-500/20 px-3 py-1.5 rounded-full border border-amber-500/20 dark:border-amber-500/30 shadow-sm whitespace-nowrap">
                   AWAITING APPROVAL
                 </span>
               </div>
@@ -82,7 +82,7 @@ export default async function QueuePage() {
                   }).where(eq(contentDrafts.id, draft.id));
                   revalidatePath('/queue');
                 }}>
-                  <button className="bg-lime-500 hover:bg-lime-600 dark:bg-lime-600 dark:hover:bg-lime-500 text-white dark:text-zinc-950 font-black py-2 md:py-2.5 px-4 md:px-6 rounded-xl shadow-md shadow-lime-500/20 transition-all text-sm md:text-base border-0">
+                  <button className="bg-lime-500 hover:bg-lime-600 dark:bg-lime-600 dark:hover:bg-lime-500 text-zinc-950 font-black py-2 md:py-2.5 px-4 md:px-6 rounded-xl shadow-md shadow-lime-500/20 transition-all text-sm md:text-base border-0">
                     Schedule
                   </button>
                 </form>
@@ -92,7 +92,7 @@ export default async function QueuePage() {
                   await db.update(contentDrafts).set({ status: "PUBLISHING" }).where(eq(contentDrafts.id, draft.id));
                   revalidatePath('/queue');
                 }}>
-                  <button className="bg-orange-500 hover:bg-orange-600 dark:bg-orange-600 dark:hover:bg-orange-500 text-white font-bold py-2 md:py-2.5 px-4 md:px-6 rounded-xl shadow-md shadow-orange-500/30 transition-all text-sm md:text-base border-0">
+                  <button className="bg-orange-500 hover:bg-orange-600 dark:bg-orange-600 dark:hover:bg-orange-500 text-zinc-950 font-bold py-2 md:py-2.5 px-4 md:px-6 rounded-xl shadow-md shadow-orange-500/30 transition-all text-sm md:text-base border-0">
                     Post Now
                   </button>
                 </form>

@@ -28,7 +28,7 @@ export function Sidebar() {
               <Sparkles className="w-5 h-5 text-white" />
             </div>
             <h1 className="text-lg font-bold text-zinc-900 dark:text-white tracking-tight leading-tight">
-              Career Intel<br /><span className="text-orange-500 dark:text-orange-400">Autopilot</span>
+              Career Intel<br /><span className="text-orange-700 dark:text-orange-400">Autopilot</span>
             </h1>
           </div>
           <ThemeToggle />
@@ -44,7 +44,7 @@ export function Sidebar() {
                 className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 ${
                   isActive 
                     ? "bg-white dark:bg-white/10 text-zinc-900 dark:text-white shadow-sm border border-zinc-200 dark:border-white/10" 
-                    : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-white/5"
+                    : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-white/5"
                 }`}
               >
                 <Icon className={`w-5 h-5 transition-colors ${isActive ? "text-orange-500 dark:text-orange-400" : "text-zinc-400 dark:text-zinc-500"}`} />
@@ -78,7 +78,7 @@ export function Sidebar() {
               key={link.href}
               href={link.href}
               className={`flex flex-col items-center justify-center w-full h-full gap-1 transition-colors ${
-                isActive ? "text-orange-500 dark:text-orange-400" : "text-zinc-500 dark:text-zinc-400"
+                isActive ? "text-orange-500 dark:text-orange-400" : "text-zinc-600 dark:text-zinc-400"
               }`}
             >
               <Icon className="w-5 h-5" />

@@ -39,7 +39,7 @@ export default async function Dashboard() {
         {/* Job Intelligence Card */}
         <div className="bg-white/60 dark:bg-white/5 backdrop-blur-2xl p-6 md:p-8 rounded-3xl border border-zinc-200 dark:border-white/10 shadow-xl hover:bg-white dark:hover:bg-white/10 transition-all duration-500 hover:-translate-y-1 group flex flex-col justify-between">
           <div>
-            <h3 className="text-xs font-bold text-lime-600 dark:text-lime-400 uppercase tracking-widest mb-4">
+            <h3 className="text-xs font-bold text-lime-800 dark:text-lime-400 uppercase tracking-widest mb-4">
               Job Intelligence
             </h3>
             <div className="flex items-end gap-3 mb-6 md:mb-8">
@@ -57,7 +57,7 @@ export default async function Dashboard() {
         {/* Content Opportunities Card */}
         <div className="bg-white/60 dark:bg-white/5 backdrop-blur-2xl p-6 md:p-8 rounded-3xl border border-zinc-200 dark:border-white/10 shadow-xl hover:bg-white dark:hover:bg-white/10 transition-all duration-500 hover:-translate-y-1 group flex flex-col justify-between">
           <div>
-            <h3 className="text-xs font-bold text-orange-500 dark:text-orange-400 uppercase tracking-widest mb-4">
+            <h3 className="text-xs font-bold text-orange-700 dark:text-orange-400 uppercase tracking-widest mb-4">
               Content Ideas
             </h3>
           <div className="flex items-end gap-3 mb-6 md:mb-8">
@@ -75,7 +75,7 @@ export default async function Dashboard() {
         {/* Drafts Awaiting Review Card */}
         <div className="bg-white/60 dark:bg-white/5 backdrop-blur-2xl p-6 md:p-8 rounded-3xl border border-zinc-200 dark:border-white/10 shadow-xl hover:bg-white dark:hover:bg-white/10 transition-all duration-500 hover:-translate-y-1 group flex flex-col justify-between">
           <div>
-            <h3 className="text-xs font-bold text-amber-500 dark:text-amber-400 uppercase tracking-widest mb-4">
+            <h3 className="text-xs font-bold text-amber-700 dark:text-amber-400 uppercase tracking-widest mb-4">
               Action Required
             </h3>
             <div className="flex items-end gap-3 mb-6 md:mb-8">
@@ -84,7 +84,7 @@ export default async function Dashboard() {
             </div>
           </div>
           <div>
-            <Link href="/queue" className="inline-flex items-center text-sm font-semibold bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-300 px-5 py-2.5 rounded-full transition-all">
+            <Link href="/queue" className="inline-flex items-center text-sm font-semibold bg-amber-500/10 hover:bg-amber-500/20 text-amber-800 dark:text-amber-300 px-5 py-2.5 rounded-full transition-all">
               Review drafts <span className="ml-2 group-hover:translate-x-1 transition-transform">→</span>
             </Link>
           </div>
@@ -92,7 +92,7 @@ export default async function Dashboard() {
 
         {/* Publishing Calendar Card */}
         <div className="bg-white/60 dark:bg-white/5 backdrop-blur-2xl p-6 md:p-8 rounded-3xl border border-zinc-200 dark:border-white/10 shadow-xl hover:bg-white dark:hover:bg-white/10 transition-all duration-500 hover:-translate-y-1">
-          <h3 className="text-xs font-bold text-emerald-500 dark:text-emerald-400 uppercase tracking-widest mb-4">
+          <h3 className="text-xs font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-widest mb-4">
             Publishing Queue
           </h3>
           <div className="mt-4 md:mt-6 space-y-4">

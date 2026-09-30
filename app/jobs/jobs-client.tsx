@@ -40,6 +40,7 @@ export function JobsClient({ jobs, profile }: { jobs: any[], profile?: any }) {
 
   useEffect(() => {
     if (profile) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setTimeFilter(profile.timeFilter || "");
       setSelectedRoles(profile.targetRoles || []);
       setSelectedLocations(profile.locationFilter || []);
@@ -54,6 +55,7 @@ export function JobsClient({ jobs, profile }: { jobs: any[], profile?: any }) {
       // Time Filter
       if (timeFilter) {
         const jobTime = new Date(job.createdAt).getTime();
+        // eslint-disable-next-line react-hooks/purity
         const diff = Date.now() - jobTime;
         const limits: Record<string, number> = {
           "1h": 3600000,
@@ -205,7 +207,7 @@ export function JobsClient({ jobs, profile }: { jobs: any[], profile?: any }) {
         {/* Salaries Filter */}
         <div className="w-full md:w-auto">
           {(() => {
-            let sOptions: string[] = [];
+            const sOptions: string[] = [];
             if (selectedCurrencies.length === 0 || selectedCurrencies.some(c => ["USD", "EUR", "GBP", "CAD"].includes(c))) {
               sOptions.push("0-50k", "50k-100k", "100k-150k", "150k-200k", "200k+");
             }

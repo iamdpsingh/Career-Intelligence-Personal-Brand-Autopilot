@@ -9,12 +9,13 @@ export function ThemeToggle() {
   const [mounted, setMounted] = React.useState(false);
 
   React.useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
   }, []);
 
   if (!mounted) {
     return (
-      <button className="p-2.5 rounded-xl bg-black/5 dark:bg-white/5 text-transparent">
+      <button className="p-2.5 rounded-xl bg-black/5 dark:bg-white/5 text-transparent" aria-label="Toggle theme">
         <Sun className="h-5 w-5" />
       </button>
     );

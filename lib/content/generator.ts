@@ -51,8 +51,8 @@ export class ContentGenerator {
       throw new Error(`Candidate ${candidateId} is not in IDEA state or does not exist.`);
     }
 
-    if (candidate.sourceType !== "github" && candidate.sourceType !== "TECH_NEWS") {
-      throw new Error(`Currently only GitHub evidence and Tech News generation are implemented.`);
+    if (candidate.sourceType !== "github" && candidate.sourceType !== "TECH_NEWS" && candidate.sourceType !== "job_market") {
+      throw new Error(`Currently only GitHub evidence, Tech News, and Job Market generation are implemented.`);
     }
 
     let evidenceClaim = candidate.title;
