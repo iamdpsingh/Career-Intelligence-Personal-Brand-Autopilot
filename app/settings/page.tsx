@@ -50,7 +50,7 @@ export default async function SettingsPage() {
         .from(repositories)
         .where(eq(repositories.userId, user.id));
     }
-  } catch (error) {
+  } catch (_error) {
     console.warn("Database connection failed for settings page");
   }
 

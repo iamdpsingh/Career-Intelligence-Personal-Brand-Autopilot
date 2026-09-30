@@ -151,7 +151,7 @@ describe("Publishing Safety Checks", () => {
     // Two concurrent workers trying to publish the same draft:
     // Worker A reads status=APPROVED, sets to PUBLISHING
     // Worker B reads status=APPROVED, but by now it's PUBLISHING → blocked
-    const worker1ReadsStatus: string = "APPROVED";
+    // worker 1 reads status
     const worker1SetsStatus: string = "PUBLISHING";
     
     // Worker 2 now reads the UPDATED status

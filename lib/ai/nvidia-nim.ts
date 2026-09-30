@@ -54,7 +54,7 @@ export class NvidiaNimProvider implements AIProvider {
     try {
       const parsed = JSON.parse(textOutput);
       return schema.parse(parsed);
-    } catch (error) {
+    } catch (_error) {
       console.error("[NvidiaNimProvider] Failed to parse structured output:", textOutput);
       throw new Error("AI output did not match required JSON schema.");
     }

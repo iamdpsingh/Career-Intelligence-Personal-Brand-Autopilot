@@ -26,21 +26,21 @@ export default async function QueuePage() {
       .from(contentDrafts)
       .innerJoin(contentCandidates, eq(contentDrafts.candidateId, contentCandidates.id))
       .where(eq(contentDrafts.status, "HUMAN_REVIEW"));
-  } catch (error) {
+  } catch (_error) {
     console.warn("Database connection failed, showing empty queue for local monkey testing");
   }
 
   return (
-    <div className="min-h-screen bg-zinc-50 p-8">
+    <main className="min-h-screen bg-zinc-50 p-8">
       <header className="mb-8 max-w-4xl mx-auto">
-        <h2 className="text-3xl font-semibold text-zinc-900">Content Queue</h2>
+        <h1 className="text-3xl font-semibold text-zinc-900">Content Queue</h1>
         <p className="text-zinc-500 mt-1">Review, approve, or reject AI-generated drafts.</p>
       </header>
 
       <div className="max-w-4xl mx-auto space-y-6">
         {drafts.length === 0 ? (
           <div className="bg-white p-12 text-center rounded-xl border border-zinc-200">
-            <h3 className="text-lg font-medium text-zinc-900">You&apos;re all caught up!</h3>
+            <h2 className="text-lg font-medium text-zinc-900">You&apos;re all caught up!</h2>
             <p className="text-zinc-500 mt-2">No drafts are currently awaiting human review.</p>
           </div>
         ) : (
@@ -120,6 +120,6 @@ export default async function QueuePage() {
           ))
         )}
       </div>
-    </div>
+    </main>
   );
 }

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { db } from "@/providers/db";
-import { contentCandidates, githubEvidence } from "@/providers/db/schema";
+import { contentCandidates } from "@/providers/db/schema";
 import { eq, desc } from "drizzle-orm";
 
 // ----------------------------------------------------------------------
@@ -33,7 +33,7 @@ export default async function OpportunitiesPage() {
       .where(eq(contentCandidates.status, "IDEA"))
       .orderBy(desc(contentCandidates.createdAt))
       .limit(50);
-  } catch (error) {
+  } catch (_error) {
     console.warn("Database connection failed, showing empty opportunities");
   }
 

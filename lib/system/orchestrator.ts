@@ -8,7 +8,7 @@ import { TechIntelligence } from "../tech/intelligence";
 import { ContentDecisionEngine } from "../content/decision";
 import { ContentGenerator } from "../content/generator";
 import { AICostController, type AIProvider } from "../ai/provider";
-import { config } from "./config";
+
 
 // ----------------------------------------------------------------------
 // SHARED ORCHESTRATOR (Spec Point 45)

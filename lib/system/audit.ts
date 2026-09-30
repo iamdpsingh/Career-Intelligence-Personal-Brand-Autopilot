@@ -1,5 +1,5 @@
 import { db } from "@/providers/db";
-import { auditLogs, automationRuns } from "@/providers/db/schema";
+import { auditLogs } from "@/providers/db/schema";
 
 // ----------------------------------------------------------------------
 // SYSTEM AUDIT LOGGER (V2)

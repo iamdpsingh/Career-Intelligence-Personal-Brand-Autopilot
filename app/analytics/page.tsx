@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { db } from "@/providers/db";
 import { automationRuns, contentDrafts, contentCandidates, publishedPosts } from "@/providers/db/schema";
-import { count, eq, desc, gte, sql } from "drizzle-orm";
+import { count, desc } from "drizzle-orm";
 
 // ----------------------------------------------------------------------
 // ANALYTICS PAGE (Spec Point 24, 50)
@@ -50,7 +50,7 @@ export default async function AnalyticsPage() {
     totalRuns = recentRuns.length;
     const successfulRuns = recentRuns.filter(r => r.status === "success").length;
     successRate = totalRuns > 0 ? Math.round((successfulRuns / totalRuns) * 100) : 0;
-  } catch (error) {
+  } catch (_error) {
     console.warn("Database connection failed for analytics page");
   }
 

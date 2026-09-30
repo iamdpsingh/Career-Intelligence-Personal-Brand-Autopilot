@@ -1,5 +1,5 @@
 import { db } from "@/providers/db";
-import { contentCandidates, contentDrafts, publishedPosts } from "@/providers/db/schema";
+import { contentCandidates, contentDrafts } from "@/providers/db/schema";
 import { eq, and, gte, sql } from "drizzle-orm";
 import { config } from "../system/config";
 

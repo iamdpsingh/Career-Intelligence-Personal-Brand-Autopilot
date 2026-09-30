@@ -1,6 +1,6 @@
 import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core";
 import crypto from "crypto";
-import { sql } from "drizzle-orm";
+
 
 // ----------------------------------------------------------------------
 // SYSTEM & AUTHENTICATION

@@ -6,10 +6,10 @@ test.describe('Dashboard E2E', () => {
     await page.goto('/');
 
     // Check that the title is correct
-    await expect(page).toHaveTitle(/Career Intelligence Autopilot/i);
+    await expect(page).toHaveTitle(/Career Intelligence & Personal Brand Autopilot/i);
 
     // Verify that the queue page link exists
-    const queueLink = page.getByRole('link', { name: /Publishing Queue/i });
+    const queueLink = page.getByRole('link', { name: /^Queue$/i });
     await expect(queueLink).toBeVisible();
   });
 });

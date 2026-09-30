@@ -29,7 +29,7 @@ export default async function Dashboard() {
       .from(contentDrafts)
       .where(eq(contentDrafts.status, "HUMAN_REVIEW"));
     pendingReviewsCount = pendingReviews[0].count;
-  } catch (error) {
+  } catch (_error) {
     console.warn("Database connection failed, using default counts for local monkey testing");
   }
 
@@ -62,10 +62,10 @@ export default async function Dashboard() {
               </span>
             )}
           </Link>
-          <Link href="/jobs" className="block px-4 py-2 hover:bg-zinc-800 hover:text-white rounded-md text-zinc-500">
+          <Link href="/jobs" className="block px-4 py-2 hover:bg-zinc-800 hover:text-white rounded-md text-zinc-400">
             Jobs (V2)
           </Link>
-          <Link href="/analytics" className="block px-4 py-2 hover:bg-zinc-800 hover:text-white rounded-md text-zinc-500">
+          <Link href="/analytics" className="block px-4 py-2 hover:bg-zinc-800 hover:text-white rounded-md text-zinc-400">
             Analytics (V3)
           </Link>
         </nav>
@@ -90,7 +90,7 @@ export default async function Dashboard() {
               <span className="text-sm text-zinc-500 mb-1">new stories</span>
             </div>
             <div className="mt-4">
-              <Link href="/opportunities" className="text-sm text-blue-600 hover:underline font-medium">
+              <Link href="/opportunities" className="text-sm text-blue-700 hover:underline font-medium">
                 Review opportunities →
               </Link>
             </div>
@@ -106,7 +106,7 @@ export default async function Dashboard() {
               <span className="text-sm text-zinc-500 mb-1">drafts to approve</span>
             </div>
             <div className="mt-4">
-              <Link href="/queue" className="text-sm text-amber-600 hover:underline font-medium">
+              <Link href="/queue" className="text-sm text-amber-700 hover:underline font-medium">
                 Review drafts →
               </Link>
             </div>
@@ -120,7 +120,7 @@ export default async function Dashboard() {
             <p className="text-zinc-600 mt-2">
               Next post: <strong className="text-zinc-900">Thursday 19:00</strong>
             </p>
-            <p className="text-zinc-400 text-sm mt-1">2 posts scheduled this week.</p>
+            <p className="text-zinc-500 text-sm mt-1">2 posts scheduled this week.</p>
           </div>
 
         </div>

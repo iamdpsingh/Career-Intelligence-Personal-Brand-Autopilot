@@ -28,7 +28,7 @@ export default async function JobsPage() {
       .from(jobs)
       .orderBy(desc(jobs.createdAt))
       .limit(50);
-  } catch (error) {
+  } catch (_error) {
     console.warn("Database connection failed, showing empty jobs page");
   }
 
