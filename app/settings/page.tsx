@@ -2,20 +2,7 @@ import Link from "next/link";
 import { db } from "@/providers/db";
 import { profiles, apiCredentials, repositories, users } from "@/providers/db/schema";
 import { eq, count } from "drizzle-orm";
-
-// ----------------------------------------------------------------------
-// SETTINGS PAGE (Spec Point 31, 51)
-// ----------------------------------------------------------------------
-// WHY THIS EXISTS:
-// This is where the user configures their profile (target roles, skills),
-// manages API credentials (GitHub token, LinkedIn OAuth status), and
-// controls which repositories are tracked.
-//
-// SECURITY NOTE (Spec Point 31):
-// We NEVER display the actual access tokens on this page. We only show
-// the provider name, status, and last-used date. The tokens stay in the
-// database and are never sent to the browser.
-// ----------------------------------------------------------------------
+import { ProfileForm } from "./profile-form";
 
 export const dynamic = "force-dynamic";
 
@@ -25,16 +12,13 @@ export default async function SettingsPage() {
   let trackedRepos: any[] = [];
 
   try {
-    // Get first user (single-user V1)
     const user = await db.query.users.findFirst();
     if (user) {
       profile = await db.query.profiles.findFirst({
         where: eq(profiles.userId, user.id),
       });
 
-      // Only fetch safe fields — NEVER send tokens to the browser (Rule 31)
-      credentials = await db
-        .select({
+      credentials = await db.select({
           id: apiCredentials.id,
           provider: apiCredentials.provider,
           type: apiCredentials.type,
@@ -45,132 +29,66 @@ export default async function SettingsPage() {
         .from(apiCredentials)
         .where(eq(apiCredentials.userId, user.id));
 
-      trackedRepos = await db
-        .select()
-        .from(repositories)
-        .where(eq(repositories.userId, user.id));
+      trackedRepos = await db.select().from(repositories).where(eq(repositories.userId, user.id));
     }
   } catch (_error) {
     console.warn("Database connection failed for settings page");
   }
 
   return (
-    <div className="min-h-screen bg-zinc-50 p-8">
-      <header className="mb-8 max-w-4xl mx-auto">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-3xl font-semibold text-zinc-900">Settings</h2>
-            <p className="text-zinc-500 mt-1">
-              Configure your profile, credentials, and tracked repositories.
-            </p>
-          </div>
-          <Link
-            href="/"
-            className="text-sm text-zinc-500 hover:text-zinc-800 font-medium"
-          >
-            ← Back to Overview
-          </Link>
-        </div>
+    <div className="space-y-8 md:space-y-10 animate-in fade-in slide-in-from-bottom-8 duration-700 pb-20">
+      <header>
+        <h2 className="text-3xl md:text-5xl font-black text-zinc-900 dark:text-white tracking-tight">Settings</h2>
+        <p className="text-zinc-500 dark:text-zinc-400 mt-2 md:mt-3 text-base md:text-lg font-medium">
+          Configure your profile, credentials, and tracked repositories.
+        </p>
       </header>
 
-      <div className="max-w-4xl mx-auto space-y-8">
+      <div className="space-y-6 md:space-y-8">
         {/* Profile Section */}
-        <section className="bg-white rounded-xl border border-zinc-200 shadow-sm overflow-hidden">
-          <div className="px-6 py-4 border-b border-zinc-200 bg-zinc-50">
-            <h3 className="font-semibold text-zinc-900">Professional Profile</h3>
-            <p className="text-xs text-zinc-500 mt-1">
+        <section className="relative z-30 bg-white/60 dark:bg-white/5 backdrop-blur-2xl rounded-3xl border border-zinc-200 dark:border-white/10 shadow-xl overflow-visible">
+          <div className="rounded-t-3xl px-6 md:px-8 py-5 md:py-6 border-b border-zinc-200 dark:border-white/10 bg-white/40 dark:bg-white/5">
+            <h3 className="text-lg md:text-xl font-bold text-zinc-900 dark:text-white">Professional Profile</h3>
+            <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1 font-medium">
               Used by the Job Intelligence Engine to match opportunities
             </p>
           </div>
-
-          <div className="p-6 space-y-4">
-            {profile ? (
-              <>
-                <div>
-                  <label className="text-sm font-medium text-zinc-700 block mb-1">
-                    Target Roles
-                  </label>
-                  <div className="flex flex-wrap gap-2">
-                    {(profile.targetRoles || []).map((role: string) => (
-                      <span
-                        key={role}
-                        className="bg-blue-50 text-blue-700 text-sm px-3 py-1 rounded-full"
-                      >
-                        {role}
-                      </span>
-                    ))}
-                    {(!profile.targetRoles || profile.targetRoles.length === 0) && (
-                      <span className="text-zinc-400 text-sm italic">Not configured</span>
-                    )}
-                  </div>
-                </div>
-
-                <div>
-                  <label className="text-sm font-medium text-zinc-700 block mb-1">
-                    Core Skills
-                  </label>
-                  <div className="flex flex-wrap gap-2">
-                    {(profile.coreSkills || []).map((skill: string) => (
-                      <span
-                        key={skill}
-                        className="bg-purple-50 text-purple-700 text-sm px-3 py-1 rounded-full"
-                      >
-                        {skill}
-                      </span>
-                    ))}
-                    {(!profile.coreSkills || profile.coreSkills.length === 0) && (
-                      <span className="text-zinc-400 text-sm italic">Not configured</span>
-                    )}
-                  </div>
-                </div>
-              </>
-            ) : (
-              <p className="text-zinc-500 text-sm">
-                No profile configured. Create a user and set up your target roles and skills.
-              </p>
-            )}
+          <div className="p-6 md:p-8">
+            <ProfileForm profile={profile} />
           </div>
         </section>
 
         {/* Credentials Section */}
-        <section className="bg-white rounded-xl border border-zinc-200 shadow-sm overflow-hidden">
-          <div className="px-6 py-4 border-b border-zinc-200 bg-zinc-50">
-            <h3 className="font-semibold text-zinc-900">API Credentials</h3>
-            <p className="text-xs text-zinc-500 mt-1">
+        <section className="relative z-20 bg-white/60 dark:bg-white/5 backdrop-blur-2xl rounded-3xl border border-zinc-200 dark:border-white/10 shadow-xl overflow-visible">
+          <div className="rounded-t-3xl px-6 md:px-8 py-5 md:py-6 border-b border-zinc-200 dark:border-white/10 bg-white/40 dark:bg-white/5">
+            <h3 className="text-lg md:text-xl font-bold text-zinc-900 dark:text-white">API Credentials</h3>
+            <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1 font-medium">
               OAuth tokens for GitHub and LinkedIn. Tokens are never displayed.
             </p>
           </div>
-
-          <div className="p-6">
+          <div className="p-6 md:p-8">
             {credentials.length === 0 ? (
-              <p className="text-zinc-500 text-sm">
+              <p className="text-zinc-500 dark:text-zinc-400 font-medium">
                 No API credentials configured. Connect GitHub and LinkedIn to enable the automation.
               </p>
             ) : (
-              <div className="space-y-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {credentials.map((cred) => (
-                  <div
-                    key={cred.id}
-                    className="flex items-center justify-between p-4 bg-zinc-50 rounded-lg border border-zinc-100"
-                  >
-                    <div className="flex items-center gap-3">
-                      <span className="text-lg">
+                  <div key={cred.id} className="flex items-center justify-between p-5 bg-zinc-50 dark:bg-white/5 hover:bg-zinc-100 dark:hover:bg-white/10 transition-colors rounded-2xl border border-zinc-200 dark:border-white/10">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-full bg-zinc-200 dark:bg-white/10 flex items-center justify-center text-xl shadow-inner">
                         {cred.provider === "github" ? "🐙" : cred.provider === "linkedin" ? "💼" : "🔑"}
-                      </span>
+                      </div>
                       <div>
-                        <p className="font-medium text-zinc-900 capitalize">{cred.provider}</p>
-                        <p className="text-xs text-zinc-500">{cred.type} • Added {cred.createdAt ? new Date(cred.createdAt).toLocaleDateString() : "unknown"}</p>
+                        <p className="font-bold text-zinc-900 dark:text-white capitalize text-lg">{cred.provider}</p>
+                        <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium mt-0.5">{cred.type} • Added {cred.createdAt ? new Date(cred.createdAt).toLocaleDateString() : "unknown"}</p>
                       </div>
                     </div>
-                    <span
-                      className={`text-xs font-semibold px-2 py-1 rounded ${
-                        cred.status === "active"
-                          ? "bg-emerald-100 text-emerald-700"
-                          : cred.status === "expired"
-                          ? "bg-amber-100 text-amber-700"
-                          : "bg-red-100 text-red-700"
-                      }`}
-                    >
+                    <span className={`text-xs font-bold px-3 py-1.5 rounded-full shadow-sm ${
+                        cred.status === "active" ? "bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20 dark:border-emerald-500/30"
+                        : cred.status === "expired" ? "bg-amber-500/10 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-500/20 dark:border-amber-500/30"
+                        : "bg-red-500/10 dark:bg-red-500/20 text-red-700 dark:text-red-300 border border-red-500/20 dark:border-red-500/30"
+                      }`}>
                       {cred.status.toUpperCase()}
                     </span>
                   </div>
@@ -181,44 +99,38 @@ export default async function SettingsPage() {
         </section>
 
         {/* Tracked Repositories */}
-        <section className="bg-white rounded-xl border border-zinc-200 shadow-sm overflow-hidden">
-          <div className="px-6 py-4 border-b border-zinc-200 bg-zinc-50">
-            <h3 className="font-semibold text-zinc-900">Tracked Repositories</h3>
-            <p className="text-xs text-zinc-500 mt-1">
+        <section className="relative z-10 bg-white/60 dark:bg-white/5 backdrop-blur-2xl rounded-3xl border border-zinc-200 dark:border-white/10 shadow-xl overflow-visible">
+          <div className="rounded-t-3xl px-6 md:px-8 py-5 md:py-6 border-b border-zinc-200 dark:border-white/10 bg-white/40 dark:bg-white/5">
+            <h3 className="text-lg md:text-xl font-bold text-zinc-900 dark:text-white">Tracked Repositories</h3>
+            <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1 font-medium">
               Repositories monitored by the GitHub Intelligence Engine
             </p>
           </div>
-
-          <div className="p-6">
+          <div className="p-6 md:p-8">
             {trackedRepos.length === 0 ? (
-              <p className="text-zinc-500 text-sm">
+              <p className="text-zinc-500 dark:text-zinc-400 font-medium">
                 No repositories tracked. Add your GitHub repos to start generating content.
               </p>
             ) : (
-              <div className="space-y-2">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {trackedRepos.map((repo) => (
-                  <div
-                    key={repo.id}
-                    className="flex items-center justify-between p-3 bg-zinc-50 rounded-lg border border-zinc-100"
-                  >
-                    <div>
-                      <p className="font-medium text-zinc-900 font-mono text-sm">{repo.name}</p>
-                      {repo.description && (
-                        <p className="text-xs text-zinc-500 mt-0.5">{repo.description}</p>
-                      )}
-                    </div>
-                    <div className="text-right">
+                  <div key={repo.id} className="flex flex-col p-5 bg-zinc-50 dark:bg-white/5 hover:bg-zinc-100 dark:hover:bg-white/10 transition-colors rounded-2xl border border-zinc-200 dark:border-white/10">
+                    <div className="flex justify-between items-start mb-3">
+                      <p className="font-bold text-zinc-900 dark:text-white font-mono">{repo.name}</p>
                       {repo.language && (
-                        <span className="text-xs bg-zinc-200 text-zinc-600 px-2 py-0.5 rounded">
+                        <span className="text-xs font-bold bg-orange-500/10 dark:bg-orange-500/20 text-orange-700 dark:text-orange-300 px-2.5 py-1 rounded-full border border-orange-500/20 dark:border-orange-500/30">
                           {repo.language}
                         </span>
                       )}
-                      {repo.lastSyncAt && (
-                        <p className="text-xs text-zinc-400 mt-1">
-                          Last synced: {new Date(repo.lastSyncAt).toLocaleDateString()}
-                        </p>
-                      )}
                     </div>
+                    {repo.description && (
+                      <p className="text-sm text-zinc-500 dark:text-zinc-400 flex-1">{repo.description}</p>
+                    )}
+                    {repo.lastSyncAt && (
+                      <p className="text-xs text-zinc-500 font-medium mt-4">
+                        Last synced: {new Date(repo.lastSyncAt).toLocaleDateString()}
+                      </p>
+                    )}
                   </div>
                 ))}
               </div>
