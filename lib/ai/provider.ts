@@ -42,7 +42,12 @@ export class AICostController {
     if (taskComplexity === 'simple') {
       // Use a fast, cheap model (e.g., Gemini Flash, GPT-4o-mini, Local Llama)
       console.log(`[AI Cost Control] Routing task to cheaper model: ${this.smallModel.name}`);
-      return this.smallModel.generateStructured(prompt, schema);
+      try {
+        return await this.smallModel.generateStructured(prompt, schema);
+      } catch (error) {
+        console.warn(`[AI Cost Control] Cheaper model failed. Falling back to advanced model: ${this.largeModel.name}`);
+        return await this.largeModel.generateStructured(prompt, schema);
+      }
     } else {
       // Use the heavyweight model (e.g., GPT-4, Claude 3.5 Sonnet) only when strictly needed.
       console.log(`[AI Cost Control] Routing complex task to advanced model: ${this.largeModel.name}`);

@@ -1,6 +1,24 @@
 import { z } from "zod";
 import { AIProvider } from "./provider";
 
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+async function fetchWithRetry(url: string, options: RequestInit, maxRetries = 4): Promise<Response> {
+  let attempt = 0;
+  while (attempt < maxRetries) {
+    const response = await fetch(url, options);
+    if (response.status === 429) {
+      attempt++;
+      const delay = Math.pow(2, attempt) * 1000;
+      console.warn(`[Groq Provider] Rate limit hit. Retrying in ${delay}ms... (Attempt ${attempt}/${maxRetries})`);
+      await sleep(delay);
+      continue;
+    }
+    return response;
+  }
+  return fetch(url, options); // One last try
+}
+
 export class GroqProvider implements AIProvider {
   name = "groq";
   private apiKey: string;
@@ -12,7 +30,7 @@ export class GroqProvider implements AIProvider {
   }
 
   async generateText(prompt: string): Promise<string> {
-    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+    const response = await fetchWithRetry("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -36,7 +54,7 @@ export class GroqProvider implements AIProvider {
   async generateStructured<T>(prompt: string, schema: z.ZodType<T>): Promise<T> {
     const systemPrompt = `You are a helpful data extraction assistant. You MUST return ONLY valid JSON matching this structure or explanation. No markdown formatting outside the JSON.\n\nRequired schema logic:\n- Make sure to strictly output a JSON object.`;
     
-    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+    const response = await fetchWithRetry("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

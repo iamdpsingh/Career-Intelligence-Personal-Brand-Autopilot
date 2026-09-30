@@ -72,9 +72,9 @@ export class GitHubClient {
    * Supports incremental syncing via 'since' parameter (Rule 48).
    */
   async getRecentCommits(owner: string, repo: string, since?: Date) {
-    let endpoint = `/repos/${owner}/${repo}/commits`;
+    let endpoint = `/repos/${owner}/${repo}/commits?per_page=100`;
     if (since) {
-      endpoint += `?since=${since.toISOString()}`;
+      endpoint += `&since=${since.toISOString()}`;
     }
     return this.fetch(endpoint);
   }
