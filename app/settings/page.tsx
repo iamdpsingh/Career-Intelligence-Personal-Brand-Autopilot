@@ -38,7 +38,7 @@ export default async function SettingsPage() {
   return (
     <div className="space-y-8 md:space-y-10 animate-in fade-in slide-in-from-bottom-8 duration-700 pb-20">
       <header>
-        <h2 className="text-3xl md:text-5xl font-black text-zinc-900 dark:text-white tracking-tight">Settings</h2>
+        <h1 className="text-3xl md:text-5xl font-black text-zinc-900 dark:text-white tracking-tight">Settings</h1>
         <p className="text-zinc-500 dark:text-zinc-400 mt-2 md:mt-3 text-base md:text-lg font-medium">
           Configure your profile, credentials, and tracked repositories.
         </p>
@@ -68,31 +68,58 @@ export default async function SettingsPage() {
           </div>
           <div className="p-6 md:p-8">
             {credentials.length === 0 ? (
-              <p className="text-zinc-500 dark:text-zinc-400 font-medium">
-                No API credentials configured. Connect GitHub and LinkedIn to enable the automation.
-              </p>
+              <div className="space-y-4">
+                <p className="text-zinc-500 dark:text-zinc-400 font-medium">
+                  No API credentials configured yet. Connect LinkedIn to enable publishing.
+                </p>
+                <a
+                  href="/api/auth/linkedin"
+                  className="inline-flex items-center gap-2 bg-[#0A66C2] hover:bg-[#004182] text-white font-bold py-3 px-6 rounded-xl transition-all shadow-lg"
+                >
+                  💼 Connect LinkedIn
+                </a>
+              </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {credentials.map((cred) => (
-                  <div key={cred.id} className="flex items-center justify-between p-5 bg-zinc-50 dark:bg-white/5 hover:bg-zinc-100 dark:hover:bg-white/10 transition-colors rounded-2xl border border-zinc-200 dark:border-white/10">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-full bg-zinc-200 dark:bg-white/10 flex items-center justify-center text-xl shadow-inner">
-                        {cred.provider === "github" ? "🐙" : cred.provider === "linkedin" ? "💼" : "🔑"}
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {credentials.map((cred) => (
+                    <div key={cred.id} className="flex items-center justify-between p-5 bg-zinc-50 dark:bg-white/5 hover:bg-zinc-100 dark:hover:bg-white/10 transition-colors rounded-2xl border border-zinc-200 dark:border-white/10">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-full bg-zinc-200 dark:bg-white/10 flex items-center justify-center text-xl shadow-inner">
+                          {cred.provider === "github" ? "🐙" : cred.provider === "linkedin" ? "💼" : "🔑"}
+                        </div>
+                        <div>
+                          <p className="font-bold text-zinc-900 dark:text-white capitalize text-lg">{cred.provider}</p>
+                          <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium mt-0.5">{cred.type} • Added {cred.createdAt ? new Date(cred.createdAt).toLocaleDateString() : "unknown"}</p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="font-bold text-zinc-900 dark:text-white capitalize text-lg">{cred.provider}</p>
-                        <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium mt-0.5">{cred.type} • Added {cred.createdAt ? new Date(cred.createdAt).toLocaleDateString() : "unknown"}</p>
-                      </div>
+                      <span className={`text-xs font-bold px-3 py-1.5 rounded-full shadow-sm ${
+                          cred.status === "active" ? "bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20 dark:border-emerald-500/30"
+                          : cred.status === "expired" ? "bg-amber-500/10 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-500/20 dark:border-amber-500/30"
+                          : "bg-red-500/10 dark:bg-red-500/20 text-red-700 dark:text-red-300 border border-red-500/20 dark:border-red-500/30"
+                        }`}>
+                        {cred.status.toUpperCase()}
+                      </span>
                     </div>
-                    <span className={`text-xs font-bold px-3 py-1.5 rounded-full shadow-sm ${
-                        cred.status === "active" ? "bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20 dark:border-emerald-500/30"
-                        : cred.status === "expired" ? "bg-amber-500/10 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-500/20 dark:border-amber-500/30"
-                        : "bg-red-500/10 dark:bg-red-500/20 text-red-700 dark:text-red-300 border border-red-500/20 dark:border-red-500/30"
-                      }`}>
-                      {cred.status.toUpperCase()}
-                    </span>
-                  </div>
-                ))}
+                  ))}
+                </div>
+                {/* Re-connect if token needs refresh */}
+                {!credentials.some(c => c.provider === 'linkedin') && (
+                  <a
+                    href="/api/auth/linkedin"
+                    className="inline-flex items-center gap-2 bg-[#0A66C2] hover:bg-[#004182] text-white font-bold py-3 px-6 rounded-xl transition-all shadow-lg"
+                  >
+                    💼 Connect LinkedIn
+                  </a>
+                )}
+                {credentials.some(c => c.provider === 'linkedin') && (
+                  <a
+                    href="/api/auth/linkedin"
+                    className="inline-flex items-center gap-2 bg-zinc-100 dark:bg-white/10 hover:bg-zinc-200 dark:hover:bg-white/20 text-zinc-700 dark:text-white font-bold py-2.5 px-5 rounded-xl transition-all text-sm border border-zinc-200 dark:border-white/10"
+                  >
+                    🔄 Re-connect LinkedIn
+                  </a>
+                )}
               </div>
             )}
           </div>

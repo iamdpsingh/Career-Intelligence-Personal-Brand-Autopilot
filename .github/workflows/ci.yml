@@ -58,17 +58,11 @@ jobs:
           GROQ_API_KEY: stub-key-for-build
           GITHUB_TOKEN: stub-token-for-build
         run: npm run build
-      - name: Start App & Wait
+      - name: Run Playwright Tests
         env:
           DATABASE_URL: ./local.db
           GROQ_API_KEY: stub-key-for-build
           GITHUB_TOKEN: stub-token-for-build
-        run: |
-          npm run start &
-          npx wait-on http://localhost:3000 --timeout 30000
-      - name: Run Playwright Tests
-        env:
-          DATABASE_URL: ./local.db
         run: npx playwright test
 
   load-test:
