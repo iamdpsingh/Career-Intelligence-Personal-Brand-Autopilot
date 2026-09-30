@@ -65,7 +65,7 @@ Built for the modern edge with a focus on type safety, performance, and maintain
 3. **Environment Configuration**
    Copy the example environment file and populate your secrets.
    ```bash
-   cp .env.example .env.local
+   cp .env.example .env
    ```
    *(See [SETUP.md](./SETUP.md) for detailed configuration options.)*
 
