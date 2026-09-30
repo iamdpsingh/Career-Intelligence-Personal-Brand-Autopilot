@@ -151,11 +151,11 @@ describe("Publishing Safety Checks", () => {
     // Two concurrent workers trying to publish the same draft:
     // Worker A reads status=APPROVED, sets to PUBLISHING
     // Worker B reads status=APPROVED, but by now it's PUBLISHING → blocked
-    const worker1ReadsStatus = "APPROVED";
-    const worker1SetsStatus = "PUBLISHING";
+    const worker1ReadsStatus: string = "APPROVED";
+    const worker1SetsStatus: string = "PUBLISHING";
     
     // Worker 2 now reads the UPDATED status
-    const worker2ReadsStatus = worker1SetsStatus; // "PUBLISHING"
+    const worker2ReadsStatus: string = worker1SetsStatus; // "PUBLISHING"
     const canWorker2Publish = worker2ReadsStatus === "APPROVED" || worker2ReadsStatus === "SCHEDULED";
     
     expect(canWorker2Publish).toBe(false);
