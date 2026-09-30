@@ -8,7 +8,7 @@ import path from "path";
  * For local-first architecture, we use better-sqlite3 with a local sqlite file.
  * This runs locally on the machine without needing any external database servers or Docker containers.
  */
-const dbPath = process.env.DATABASE_URL?.replace('sqlite://', '') || path.join(process.cwd(), "local.db");
+const dbPath = process.env.DATABASE_URL?.replace('sqlite://', '').replace('file:', '') || path.join(process.cwd(), "local.db");
 const sqlite = new Database(dbPath);
 
 export const db = drizzle(sqlite, { schema });

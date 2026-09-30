@@ -9,7 +9,7 @@ export default defineConfig({
   out: "./providers/db/migrations",
   dialect: "sqlite",
   dbCredentials: {
-    url: process.env.DATABASE_URL || "file:./local.db",
+    url: process.env.DATABASE_URL?.replace('file:', '').replace('sqlite://', '') || "./local.db",
   },
   verbose: true,
   strict: false,
