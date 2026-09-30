@@ -1,65 +1,114 @@
 # Career Intelligence & Personal Brand Autopilot
 
-An intelligent automation system that acts as a career intelligence engine, gathering evidence of your engineering work and industry trends, and drafting high-quality content for human review before publishing to LinkedIn.
+[![CI Pipeline](https://github.com/iamdpsingh/Career-Intelligence-Personal-Brand-Autopilot/actions/workflows/ci.yml/badge.svg)](https://github.com/iamdpsingh/Career-Intelligence-Personal-Brand-Autopilot/actions)
+[![TypeScript](https://img.shields.io/badge/TypeScript-Ready-blue.svg)](https://www.typescriptlang.org/)
+[![Next.js](https://img.shields.io/badge/Next.js-15-black.svg)](https://nextjs.org/)
 
-## Master Specification & Definition of Done
+An autonomous career intelligence and personal brand management engine. This system aggregates your engineering work, tracks industry trends, and drafts high-signal, evidence-backed content for human review before publishing to LinkedIn. 
 
-The project is built in phases (V1 -> V2 -> V3) and is only considered complete when this checklist is fully resolved.
+Designed for engineers who want to maintain an active professional presence without sacrificing deep work time or compromising on technical depth.
 
-### V1 - Core Working System
-- [x] Architecture documented (docs/decisions)
-- [x] Database documented
-- [x] All tables documented
-- [x] API contracts documented
-- [x] Authentication documented
-- [x] OAuth flows documented
-- [x] Credentials secured
-- [x] PII rules implemented
-- [x] GitHub integration working
-- [x] GitHub evidence extraction working
-- [x] AI provider abstraction working
-- [x] Content generation working
-- [x] Evidence validation working
-- [x] Content queue working
-- [x] Human approval working
-- [x] Vercel deployment working
-- [x] Cron working
-- [x] Environment configuration documented
-- [x] Free-tier limits documented
-- [x] Cost controls implemented
-- [x] README complete
-- [x] SECURITY.md complete
-- [x] CONTRIBUTING.md complete
-- [x] ADRs complete
-- [x] .agents/rules complete (DONE)
-- [x] No secrets committed
-- [x] No unsupported personal claims
-- [x] No automatic unapproved LinkedIn publishing
+## 🧠 Philosophy: Human-in-the-Loop Automation
 
-### V2 - Advanced Integrations
-- [x] Job discovery working
-- [x] Tech discovery working
-- [x] Image generation working
-- [x] Scheduling working
-- [x] LinkedIn publishing working
-- [x] Idempotency implemented
-- [x] Retry strategy implemented
-- [x] Failure handling implemented
-- [x] Audit logging implemented
+Unlike standard auto-posting bots that spam generic content, this engine is built on a **human-approved** philosophy:
+1. **Gather**: Pulls raw engineering data (GitHub commits, PRs) and industry trends (Tech blogs, job postings).
+2. **Synthesize**: Uses AI to draft well-reasoned, highly technical posts based on *actual evidence*.
+3. **Queue**: Places drafts into a human-review queue. 
+4. **Publish**: Nothing goes live on LinkedIn without your explicit approval. 
 
-### V3 - Polish & Analytics
-- [x] Duplicate detection working
-- [x] Monitoring implemented
-- [x] CI implemented
-- [x] CD implemented
-- [x] Security scanning implemented
-- [x] Unit tests implemented
-- [x] Integration tests implemented
-- [x] E2E tests implemented
+## ✨ Key Features
 
-## Architecture
+- **GitHub Intelligence Engine**: Extracts themes from your code commits, PRs, and repository activity to highlight real technical achievements.
+- **Trend & Job Discovery**: Analyzes the market for emerging tech and relevant roles to contextualize your brand.
+- **Content Generation Pipeline**: Leverages modern LLMs for intelligent drafting with strict anti-hallucination and duplicate detection mechanisms.
+- **Human-First Queue**: A clean, Next.js dashboard to review, edit, schedule, or reject AI-generated drafts.
+- **Idempotent Operations**: Built with robust retry strategies and idempotency keys to handle API rate limits and transient failures gracefully.
 
-- **Frontend:** Next.js (App Router), TypeScript, Tailwind CSS, shadcn/ui
-- **Backend:** Next.js Route Handlers
-- **Database:** PostgreSQL via Drizzle ORM
-- **Deployment:** Vercel (Hobby Tier Cron)
+## 🏗 Architecture & Stack
+
+Built for the modern edge with a focus on type safety, performance, and maintainability.
+
+- **Frontend**: [Next.js (App Router)](https://nextjs.org/), React 19, [Tailwind CSS v4](https://tailwindcss.com/), [shadcn/ui](https://ui.shadcn.com/)
+- **Backend**: Next.js Route Handlers (Serverless APIs)
+- **Database**: [PostgreSQL](https://www.postgresql.org/) with [Drizzle ORM](https://orm.drizzle.team/)
+- **Infrastructure**: Designed for [Vercel](https://vercel.com/) (Hobby Tier compatible with Vercel Cron)
+- **Quality Assurance**: 
+  - Unit & Integration Tests (`Jest` / `Vitest`)
+  - End-to-End Tests (`Playwright`)
+  - Load Testing (`k6`)
+  - Accessibility Audits (`AxeBuilder`)
+
+*(For deeper technical decisions, refer to [ARCHITECTURE.md](./ARCHITECTURE.md).)*
+
+## 🚀 Quick Start
+
+### Prerequisites
+- Node.js (v18+)
+- PostgreSQL database (local or cloud e.g., Supabase/Neon)
+- GitHub Personal Access Token (for the intelligence engine)
+- AI Provider API Key (NVIDIA NIM, OpenAI, Anthropic, etc.)
+- LinkedIn API credentials
+
+### Installation
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/iamdpsingh/Career-Intelligence-Personal-Brand-Autopilot.git
+   cd career-intelligence-autopilot
+   ```
+
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
+
+3. **Environment Configuration**
+   Copy the example environment file and populate your secrets.
+   ```bash
+   cp .env.example .env.local
+   ```
+   *(See [SETUP.md](./SETUP.md) for detailed configuration options.)*
+
+4. **Database Setup**
+   Run Drizzle migrations to initialize your schema:
+   ```bash
+   npm run db:push
+   ```
+
+5. **Run the Development Server**
+   ```bash
+   npm run dev
+   ```
+   The dashboard will be available at [http://localhost:3000](http://localhost:3000).
+
+## 🧪 Testing
+
+We take reliability seriously. The CI pipeline enforces strict checks before any merge.
+
+```bash
+# Run unit tests
+npm run test
+
+# Run E2E & Accessibility tests (Playwright)
+npm run test:e2e
+
+# Run load tests (k6)
+npm run test:load
+```
+*(For detailed testing strategies, see [TESTING.md](./TESTING.md).)*
+
+## 🤝 Contributing
+
+Contributions are welcome! Whether it's adding new intelligence sources, refining the AI prompts, or improving the UI. 
+
+1. Check the [open issues](https://github.com/iamdpsingh/Career-Intelligence-Personal-Brand-Autopilot/issues).
+2. Create a feature branch (`git checkout -b feat/amazing-feature`).
+3. Ensure all tests and linting pass (`npm run build` / `npm run test`).
+4. Commit using [Conventional Commits](https://www.conventionalcommits.org/).
+5. Open a Pull Request.
+
+Please review our [SECURITY.md](./SECURITY.md) for vulnerability reporting guidelines.
+
+## 📄 License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
