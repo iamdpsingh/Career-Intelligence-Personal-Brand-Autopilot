@@ -1,28 +1,13 @@
-import Link from "next/link";
 import { db } from "@/providers/db";
 import { automationRuns, contentDrafts, contentCandidates, publishedPosts } from "@/providers/db/schema";
 import { count, desc } from "drizzle-orm";
-
-// ----------------------------------------------------------------------
-// ANALYTICS PAGE (Spec Point 24, 50)
-// ----------------------------------------------------------------------
-// WHY THIS EXISTS:
-// You need to see what the automation is actually doing. This page shows:
-// - Recent automation runs (success/failure/partial)
-// - Content pipeline metrics (candidates → drafts → published)
-// - API usage patterns
-//
-// WHY server-side rendering?
-// Because these metrics are read directly from SQLite (or Postgres on
-// Vercel). No JavaScript framework needed. The page loads fast and
-// always shows the latest data because of force-dynamic.
-// ----------------------------------------------------------------------
 
 export const dynamic = "force-dynamic";
 
 export default async function AnalyticsPage() {
   // Initialize metrics with defaults for when DB is empty
   let recentRuns: any[] = [];
+  let recentCandidates: any[] = [];
   let totalCandidates = 0;
   let totalDrafts = 0;
   let totalPublished = 0;
@@ -36,6 +21,13 @@ export default async function AnalyticsPage() {
       .from(automationRuns)
       .orderBy(desc(automationRuns.startedAt))
       .limit(20);
+
+    // Fetch recent candidates (ideas)
+    recentCandidates = await db
+      .select()
+      .from(contentCandidates)
+      .orderBy(desc(contentCandidates.createdAt))
+      .limit(10);
 
     // Calculate aggregate metrics
     const candidateCount = await db.select({ count: count() }).from(contentCandidates);
@@ -55,118 +47,173 @@ export default async function AnalyticsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-50 p-8">
-      <header className="mb-8 max-w-5xl mx-auto">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-3xl font-semibold text-zinc-900">Analytics</h2>
-            <p className="text-zinc-500 mt-1">
-              Automation run history and content pipeline metrics.
-            </p>
-          </div>
-          <Link
-            href="/"
-            className="text-sm text-zinc-500 hover:text-zinc-800 font-medium"
-          >
-            ← Back to Overview
-          </Link>
-        </div>
+    <div className="space-y-8 md:space-y-10 animate-in fade-in slide-in-from-bottom-8 duration-700 pb-20">
+      <header>
+        <h2 className="text-3xl md:text-5xl font-black text-zinc-900 dark:text-white tracking-tight">Analytics</h2>
+        <p className="text-zinc-500 dark:text-zinc-400 mt-2 md:mt-3 text-base md:text-lg font-medium">
+          Automation run history and content pipeline metrics.
+        </p>
       </header>
 
-      <div className="max-w-5xl mx-auto">
+      <div className="space-y-6 md:space-y-8">
         {/* Pipeline Metrics */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <div className="bg-white p-6 rounded-xl border border-zinc-200 shadow-sm">
-            <h3 className="text-sm font-semibold text-zinc-500 uppercase tracking-wider mb-1">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+          <div className="bg-white/60 dark:bg-white/5 backdrop-blur-2xl p-6 md:p-8 rounded-3xl border border-zinc-200 dark:border-white/10 shadow-xl hover:bg-white dark:hover:bg-white/10 transition-all duration-300">
+            <h3 className="text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-widest mb-4">
               Candidates
             </h3>
-            <span className="text-3xl font-bold text-zinc-900">{totalCandidates}</span>
-            <p className="text-xs text-zinc-400 mt-1">Ideas discovered</p>
+            <span className="text-5xl md:text-6xl font-black text-zinc-900 dark:text-white">{totalCandidates}</span>
+            <p className="text-sm text-zinc-500 font-medium mt-2">Ideas discovered</p>
           </div>
 
-          <div className="bg-white p-6 rounded-xl border border-zinc-200 shadow-sm">
-            <h3 className="text-sm font-semibold text-zinc-500 uppercase tracking-wider mb-1">
+          <div className="bg-white/60 dark:bg-white/5 backdrop-blur-2xl p-6 md:p-8 rounded-3xl border border-zinc-200 dark:border-white/10 shadow-xl hover:bg-white dark:hover:bg-white/10 transition-all duration-300">
+            <h3 className="text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-widest mb-4">
               Drafts
             </h3>
-            <span className="text-3xl font-bold text-zinc-900">{totalDrafts}</span>
-            <p className="text-xs text-zinc-400 mt-1">Content generated</p>
+            <span className="text-5xl md:text-6xl font-black text-zinc-900 dark:text-white">{totalDrafts}</span>
+            <p className="text-sm text-zinc-500 font-medium mt-2">Content generated</p>
           </div>
 
-          <div className="bg-white p-6 rounded-xl border border-zinc-200 shadow-sm">
-            <h3 className="text-sm font-semibold text-zinc-500 uppercase tracking-wider mb-1">
+          <div className="bg-white/60 dark:bg-white/5 backdrop-blur-2xl p-6 md:p-8 rounded-3xl border border-zinc-200 dark:border-white/10 shadow-xl hover:bg-white dark:hover:bg-white/10 transition-all duration-300">
+            <h3 className="text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-widest mb-4">
               Published
             </h3>
-            <span className="text-3xl font-bold text-emerald-600">{totalPublished}</span>
-            <p className="text-xs text-zinc-400 mt-1">Posts live on LinkedIn</p>
+            <span className="text-5xl md:text-6xl font-black text-lime-600 dark:text-lime-400">{totalPublished}</span>
+            <p className="text-sm text-zinc-500 font-medium mt-2">Posts live on LinkedIn</p>
           </div>
 
-          <div className="bg-white p-6 rounded-xl border border-zinc-200 shadow-sm">
-            <h3 className="text-sm font-semibold text-zinc-500 uppercase tracking-wider mb-1">
+          <div className="bg-white/60 dark:bg-white/5 backdrop-blur-2xl p-6 md:p-8 rounded-3xl border border-zinc-200 dark:border-white/10 shadow-xl hover:bg-white dark:hover:bg-white/10 transition-all duration-300">
+            <h3 className="text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-widest mb-4">
               Success Rate
             </h3>
-            <span className={`text-3xl font-bold ${successRate >= 80 ? "text-emerald-600" : successRate >= 50 ? "text-amber-500" : "text-red-500"}`}>
+            <span className={`text-5xl md:text-6xl font-black ${successRate >= 80 ? "text-lime-600 dark:text-lime-400" : successRate >= 50 ? "text-amber-600 dark:text-amber-400" : "text-red-600 dark:text-red-400"}`}>
               {successRate}%
             </span>
-            <p className="text-xs text-zinc-400 mt-1">Automation reliability</p>
+            <p className="text-sm text-zinc-500 font-medium mt-2">Automation reliability</p>
           </div>
         </div>
 
         {/* Recent Runs Table */}
-        <div className="bg-white rounded-xl border border-zinc-200 shadow-sm overflow-hidden">
-          <div className="px-6 py-4 border-b border-zinc-200">
-            <h3 className="font-semibold text-zinc-900">Recent Automation Runs</h3>
+        <div className="bg-white/60 dark:bg-white/5 backdrop-blur-2xl rounded-3xl border border-zinc-200 dark:border-white/10 shadow-xl overflow-hidden">
+          <div className="px-6 md:px-8 py-5 md:py-6 border-b border-zinc-200 dark:border-white/10 bg-white/40 dark:bg-white/5">
+            <h3 className="text-lg md:text-xl font-bold text-zinc-900 dark:text-white">Recent Automation Runs</h3>
           </div>
 
           {recentRuns.length === 0 ? (
-            <div className="p-8 text-center text-zinc-500">
-              No automation runs recorded yet. Run the daemon or trigger /api/cron/daily.
+            <div className="p-8 md:p-12 text-center">
+              <p className="text-zinc-500 dark:text-zinc-400 font-medium">No automation runs recorded yet. Run the daemon to trigger a scan.</p>
             </div>
           ) : (
-            <table className="w-full text-sm">
-              <thead className="bg-zinc-50 text-zinc-600 uppercase text-xs tracking-wider">
-                <tr>
-                  <th className="px-6 py-3 text-left">Run ID</th>
-                  <th className="px-6 py-3 text-left">Trigger</th>
-                  <th className="px-6 py-3 text-left">Status</th>
-                  <th className="px-6 py-3 text-left">Started</th>
-                  <th className="px-6 py-3 text-right">Errors</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-zinc-100">
-                {recentRuns.map((run) => {
-                  const statusColor =
-                    run.status === "success"
-                      ? "bg-emerald-100 text-emerald-700"
-                      : run.status === "partial"
-                      ? "bg-amber-100 text-amber-700"
-                      : run.status === "running"
-                      ? "bg-blue-100 text-blue-700"
-                      : "bg-red-100 text-red-700";
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm text-left whitespace-nowrap">
+                <thead className="bg-zinc-50 dark:bg-black/20 text-zinc-500 dark:text-zinc-400 uppercase text-xs font-bold tracking-wider">
+                  <tr>
+                    <th className="px-6 md:px-8 py-4">Run ID</th>
+                    <th className="px-6 md:px-8 py-4">Trigger</th>
+                    <th className="px-6 md:px-8 py-4">Status</th>
+                    <th className="px-6 md:px-8 py-4">Started</th>
+                    <th className="px-6 md:px-8 py-4 text-right">Errors</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-zinc-200 dark:divide-white/5">
+                  {recentRuns.map((run) => {
+                    const statusColor =
+                      run.status === "success"
+                        ? "bg-lime-500/10 dark:bg-lime-500/20 text-lime-700 dark:text-lime-300 border border-lime-500/20 dark:border-lime-500/30"
+                        : run.status === "partial"
+                        ? "bg-amber-500/10 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-500/20 dark:border-amber-500/30"
+                        : run.status === "running"
+                        ? "bg-blue-500/10 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300 border border-blue-500/20 dark:border-blue-500/30"
+                        : "bg-red-500/10 dark:bg-red-500/20 text-red-700 dark:text-red-300 border border-red-500/20 dark:border-red-500/30";
 
-                  return (
-                    <tr key={run.id} className="hover:bg-zinc-50 transition-colors">
-                      <td className="px-6 py-3 font-mono text-xs text-zinc-500">
-                        {run.id.substring(0, 8)}...
-                      </td>
-                      <td className="px-6 py-3">{run.trigger}</td>
-                      <td className="px-6 py-3">
-                        <span className={`text-xs font-semibold px-2 py-1 rounded ${statusColor}`}>
-                          {run.status.toUpperCase()}
-                        </span>
-                      </td>
-                      <td className="px-6 py-3 text-zinc-500">
-                        {run.startedAt ? new Date(run.startedAt).toLocaleString() : "—"}
-                      </td>
-                      <td className="px-6 py-3 text-right">
-                        <span className={run.errorsCount > 0 ? "text-red-500 font-semibold" : "text-zinc-400"}>
-                          {run.errorsCount || 0}
-                        </span>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                    return (
+                      <tr key={run.id} className="hover:bg-zinc-50 dark:hover:bg-white/5 transition-colors">
+                        <td className="px-6 md:px-8 py-4 font-mono text-xs text-zinc-500 font-medium">
+                          {run.id.substring(0, 8)}...
+                        </td>
+                        <td className="px-6 md:px-8 py-4 text-zinc-700 dark:text-zinc-300 font-medium">{run.trigger}</td>
+                        <td className="px-6 md:px-8 py-4">
+                          <span className={`text-xs font-bold px-3 py-1.5 rounded-full shadow-sm ${statusColor}`}>
+                            {run.status.toUpperCase()}
+                          </span>
+                        </td>
+                        <td className="px-6 md:px-8 py-4 text-zinc-500 dark:text-zinc-400 font-medium">
+                          {run.startedAt ? new Date(run.startedAt).toLocaleString() : "—"}
+                        </td>
+                        <td className="px-6 md:px-8 py-4 text-right">
+                          <span className={run.errorsCount > 0 ? "text-red-600 dark:text-red-400 font-bold" : "text-zinc-400 dark:text-zinc-500 font-medium"}>
+                            {run.errorsCount || 0}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+
+        {/* Recent Ideas / Candidates Table */}
+        <div className="bg-white/60 dark:bg-white/5 backdrop-blur-2xl rounded-3xl border border-zinc-200 dark:border-white/10 shadow-xl overflow-hidden mt-8">
+          <div className="px-6 md:px-8 py-5 md:py-6 border-b border-zinc-200 dark:border-white/10 bg-white/40 dark:bg-white/5">
+            <h3 className="text-lg md:text-xl font-bold text-zinc-900 dark:text-white">Recently Discovered Ideas</h3>
+          </div>
+
+          {recentCandidates.length === 0 ? (
+            <div className="p-8 md:p-12 text-center">
+              <p className="text-zinc-500 dark:text-zinc-400 font-medium">No ideas discovered yet. Ensure GitHub or Tech Intelligence is finding content.</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm text-left whitespace-nowrap">
+                <thead className="bg-zinc-50 dark:bg-black/20 text-zinc-500 dark:text-zinc-400 uppercase text-xs font-bold tracking-wider">
+                  <tr>
+                    <th className="px-6 md:px-8 py-4">Title / Topic</th>
+                    <th className="px-6 md:px-8 py-4">Source</th>
+                    <th className="px-6 md:px-8 py-4">Status</th>
+                    <th className="px-6 md:px-8 py-4 text-right">Discovered</th>
+                    <th className="px-6 md:px-8 py-4 text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-zinc-200 dark:divide-white/5">
+                  {recentCandidates.map((candidate) => {
+                    const statusColor =
+                      candidate.status === "DRAFTING" || candidate.status === "DRAFTED"
+                        ? "bg-blue-500/10 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300 border border-blue-500/20 dark:border-blue-500/30"
+                        : candidate.status === "REJECTED"
+                        ? "bg-red-500/10 dark:bg-red-500/20 text-red-700 dark:text-red-300 border border-red-500/20 dark:border-red-500/30"
+                        : "bg-amber-500/10 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-500/20 dark:border-amber-500/30";
+
+                    return (
+                      <tr key={candidate.id} className="hover:bg-zinc-50 dark:hover:bg-white/5 transition-colors">
+                        <td className="px-6 md:px-8 py-4 font-bold text-zinc-900 dark:text-white truncate max-w-xs md:max-w-md">
+                          {candidate.title}
+                        </td>
+                        <td className="px-6 md:px-8 py-4 text-zinc-700 dark:text-zinc-300 font-medium uppercase text-xs tracking-wider">
+                          {candidate.sourceType}
+                        </td>
+                        <td className="px-6 md:px-8 py-4">
+                          <span className={`text-xs font-bold px-3 py-1.5 rounded-full shadow-sm ${statusColor}`}>
+                            {candidate.status}
+                          </span>
+                        </td>
+                        <td className="px-6 md:px-8 py-4 text-right text-zinc-500 dark:text-zinc-400 font-medium">
+                          {candidate.createdAt ? Math.max(0, Math.floor((new Date().getTime() - new Date(candidate.createdAt).getTime()) / (1000 * 60 * 60 * 24))) + " days ago" : "—"}
+                        </td>
+                        <td className="px-6 md:px-8 py-4 text-right">
+                          {(candidate.status === "DRAFTED" || candidate.status === "DRAFTING") ? (
+                            <a href="/queue" className="text-blue-600 dark:text-blue-400 font-bold hover:underline text-xs">View Draft →</a>
+                          ) : (
+                            <span className="text-zinc-400 dark:text-zinc-600 text-xs">—</span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
       </div>

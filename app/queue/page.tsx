@@ -3,13 +3,6 @@ import { contentDrafts, contentCandidates } from "@/providers/db/schema";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
-// ----------------------------------------------------------------------
-// HUMAN REVIEW UI (Rule 52, 54, 61)
-// ----------------------------------------------------------------------
-// This is the Human Shield. The AI cannot publish directly to LinkedIn.
-// Every generated draft lands here in "HUMAN_REVIEW" state.
-// ----------------------------------------------------------------------
-
 export const dynamic = 'force-dynamic';
 
 export default async function QueuePage() {
@@ -31,47 +24,47 @@ export default async function QueuePage() {
   }
 
   return (
-    <main className="min-h-screen bg-zinc-50 p-8">
-      <header className="mb-8 max-w-4xl mx-auto">
-        <h1 className="text-3xl font-semibold text-zinc-900">Content Queue</h1>
-        <p className="text-zinc-500 mt-1">Review, approve, or reject AI-generated drafts.</p>
+    <div className="space-y-8 md:space-y-10 animate-in fade-in slide-in-from-bottom-8 duration-700 pb-20">
+      <header>
+        <h2 className="text-3xl md:text-5xl font-black text-zinc-900 dark:text-white tracking-tight">Content Queue</h2>
+        <p className="text-zinc-500 dark:text-zinc-400 mt-2 md:mt-3 text-base md:text-lg font-medium">Review, approve, or reject AI-generated drafts.</p>
       </header>
 
-      <div className="max-w-4xl mx-auto space-y-6">
+      <div className="space-y-4 md:space-y-6">
         {drafts.length === 0 ? (
-          <div className="bg-white p-12 text-center rounded-xl border border-zinc-200">
-            <h2 className="text-lg font-medium text-zinc-900">You&apos;re all caught up!</h2>
-            <p className="text-zinc-500 mt-2">No drafts are currently awaiting human review.</p>
+          <div className="bg-white/60 dark:bg-white/5 backdrop-blur-2xl p-8 md:p-12 text-center rounded-3xl border border-zinc-200 dark:border-white/10 shadow-xl">
+            <h3 className="text-xl font-bold text-zinc-900 dark:text-white">You&apos;re all caught up!</h3>
+            <p className="text-zinc-500 dark:text-zinc-400 mt-2 font-medium">No drafts are currently awaiting human review.</p>
           </div>
         ) : (
           drafts.map((draft) => (
-            <div key={draft.id} className="bg-white rounded-xl border border-zinc-200 shadow-sm overflow-hidden">
-              <div className="bg-zinc-100 px-6 py-3 border-b border-zinc-200 flex justify-between items-center">
-                <div className="flex items-center gap-3">
-                  <span className="bg-blue-100 text-blue-700 text-xs font-semibold px-2 py-1 rounded uppercase tracking-wider">
+            <div key={draft.id} className="bg-white/60 dark:bg-white/5 backdrop-blur-2xl rounded-3xl border border-zinc-200 dark:border-white/10 shadow-xl overflow-hidden group hover:border-zinc-300 dark:hover:border-white/20 transition-all duration-300">
+              <div className="bg-white/40 dark:bg-white/5 px-6 md:px-8 py-4 md:py-5 border-b border-zinc-200 dark:border-white/10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div className="flex items-center gap-4">
+                  <span className="bg-orange-500/10 dark:bg-orange-500/20 text-orange-700 dark:text-orange-300 border border-orange-500/20 dark:border-orange-500/30 text-xs font-bold px-3 py-1.5 rounded-full uppercase tracking-wider shadow-sm shrink-0">
                     {draft.sourceType}
                   </span>
-                  <h3 className="font-medium text-zinc-800">{draft.candidateTitle}</h3>
+                  <h3 className="font-bold text-zinc-900 dark:text-white text-base md:text-lg">{draft.candidateTitle}</h3>
                 </div>
-                <span className="text-xs font-medium text-amber-600 bg-amber-50 px-2 py-1 rounded border border-amber-200">
+                <span className="text-xs font-bold text-amber-700 dark:text-amber-300 bg-amber-500/10 dark:bg-amber-500/20 px-3 py-1.5 rounded-full border border-amber-500/20 dark:border-amber-500/30 shadow-sm whitespace-nowrap">
                   AWAITING APPROVAL
                 </span>
               </div>
               
-              <div className="p-6">
-                <div className="prose prose-sm max-w-none text-zinc-700 whitespace-pre-wrap">
+              <div className="p-6 md:p-8">
+                <div className="prose prose-zinc dark:prose-invert max-w-none text-zinc-700 dark:text-zinc-300 font-medium whitespace-pre-wrap leading-relaxed">
                   {draft.content}
                 </div>
               </div>
 
-              {/* ACTION BUTTONS (Rule 54: Post Now vs Queue) */}
-              <div className="bg-zinc-50 px-6 py-4 border-t border-zinc-200 flex gap-3">
+              {/* ACTION BUTTONS */}
+              <div className="bg-zinc-50/50 dark:bg-black/20 px-6 md:px-8 py-5 md:py-6 border-t border-zinc-200 dark:border-white/10 flex flex-wrap gap-3 md:gap-4 items-center">
                 <form action={async () => {
                   "use server";
                   await db.update(contentDrafts).set({ status: "APPROVED" }).where(eq(contentDrafts.id, draft.id));
                   revalidatePath('/queue');
                 }}>
-                  <button className="bg-zinc-900 hover:bg-zinc-800 text-white font-medium py-2 px-4 rounded-md shadow-sm transition-colors">
+                  <button className="bg-white dark:bg-white/10 hover:bg-zinc-100 dark:hover:bg-white/20 text-zinc-900 dark:text-white font-bold py-2 md:py-2.5 px-4 md:px-6 rounded-xl shadow-sm md:shadow-lg border border-zinc-200 dark:border-white/10 transition-all text-sm md:text-base">
                     Approve to Queue
                   </button>
                 </form>
@@ -89,7 +82,7 @@ export default async function QueuePage() {
                   }).where(eq(contentDrafts.id, draft.id));
                   revalidatePath('/queue');
                 }}>
-                  <button className="bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2 px-4 rounded-md shadow-sm transition-colors">
+                  <button className="bg-lime-500 hover:bg-lime-600 dark:bg-lime-600 dark:hover:bg-lime-500 text-white dark:text-zinc-950 font-black py-2 md:py-2.5 px-4 md:px-6 rounded-xl shadow-md shadow-lime-500/20 transition-all text-sm md:text-base border-0">
                     Schedule
                   </button>
                 </form>
@@ -99,19 +92,19 @@ export default async function QueuePage() {
                   await db.update(contentDrafts).set({ status: "PUBLISHING" }).where(eq(contentDrafts.id, draft.id));
                   revalidatePath('/queue');
                 }}>
-                  <button className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md shadow-sm transition-colors">
+                  <button className="bg-orange-500 hover:bg-orange-600 dark:bg-orange-600 dark:hover:bg-orange-500 text-white font-bold py-2 md:py-2.5 px-4 md:px-6 rounded-xl shadow-md shadow-orange-500/30 transition-all text-sm md:text-base border-0">
                     Post Now
                   </button>
                 </form>
 
-                <div className="flex-1" />
+                <div className="flex-1 min-w-[1rem]" />
 
                 <form action={async () => {
                   "use server";
                   await db.update(contentDrafts).set({ status: "REJECTED" }).where(eq(contentDrafts.id, draft.id));
                   revalidatePath('/queue');
                 }}>
-                  <button className="bg-white hover:bg-red-50 text-red-600 border border-red-200 font-medium py-2 px-4 rounded-md transition-colors">
+                  <button className="bg-transparent hover:bg-red-50 dark:hover:bg-red-500/10 text-red-600 dark:text-red-400 font-bold border border-red-200 dark:border-red-500/30 py-2 md:py-2.5 px-4 md:px-6 rounded-xl transition-all text-sm md:text-base">
                     Reject
                   </button>
                 </form>
@@ -120,6 +113,6 @@ export default async function QueuePage() {
           ))
         )}
       </div>
-    </main>
+    </div>
   );
 }
