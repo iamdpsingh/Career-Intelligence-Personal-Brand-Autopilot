@@ -29,7 +29,7 @@ export function MultiSelectDropdown({
   }, []);
 
   return (
-    <div className="relative" ref={ref}>
+    <div className={`relative ${isOpen ? 'z-50' : 'z-10'}`} ref={ref}>
       <label className="text-sm font-bold text-zinc-600 dark:text-zinc-300 block mb-2 uppercase tracking-wider">
         {label}
       </label>
