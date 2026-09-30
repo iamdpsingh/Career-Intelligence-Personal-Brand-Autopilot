@@ -6,29 +6,32 @@ import { githubActivity, githubEvidence, contentCandidates } from "@/providers/d
 import { eq, and } from "drizzle-orm";
 
 // ----------------------------------------------------------------------
-// GITHUB TRUTH ENGINE (Rules 06, 07, 08)
+// GITHUB TRUTH ENGINE — ONE DAILY SUMMARY PER REPO
 // ----------------------------------------------------------------------
-// This module analyzes raw GitHub commits and extracts verified technical
-// evidence. It explicitly prevents hallucination by grounding every claim
-// in real source code changes.
+// Fetches ALL commits since lastSyncAt and produces ONE summary per repo
+// per day. If the whole project is done, produces a full project summary.
+// Does NOT split into per-commit or per-batch entries.
 // ----------------------------------------------------------------------
 
-const EvidenceSchema = z.object({
-  stories: z.array(z.object({
-    isSignificant: z.boolean().describe("Does this represent a meaningful architectural change, bug fix, or feature?"),
-    storyType: z.enum([
-      "PROBLEM_SOLUTION", 
-      "ENGINEERING_LESSON", 
-      "ARCHITECTURE", 
-      "DEBUGGING", 
-      "PERFORMANCE", 
-      "DATA_QUALITY",
-      "MILESTONE",
-      "NONE"
-    ]).describe("Classify the discovery based on Rule 08 categories."),
-    claim: z.string().describe("A high-level summary of the problem solved or milestone achieved. (e.g., 'Overhauled database schema to support multi-tenancy')"),
-    filesChanged: z.array(z.string()).describe("The key files involved in this achievement."),
-  }))
+const DailySummarySchema = z.object({
+  isSignificant: z.boolean(),
+  storyType: z.enum([
+    "PROBLEM_SOLUTION",
+    "ENGINEERING_LESSON",
+    "ARCHITECTURE",
+    "DEBUGGING",
+    "PERFORMANCE",
+    "DATA_QUALITY",
+    "MILESTONE",
+    "PROJECT_COMPLETE",
+    "NONE",
+  ]),
+  // ONE headline claim summarising today's entire body of work
+  claim: z.string().describe("Single sentence: what was built/solved TODAY across all commits."),
+  // Narrative for LinkedIn post angle — the human story behind the work
+  narrative: z.string().describe("2-3 sentence narrative suitable for a LinkedIn post about today's work."),
+  keyFiles: z.array(z.string()).describe("Most important files changed."),
+  isProjectComplete: z.boolean().describe("True if commits indicate the project/feature reached a finished state today."),
 });
 
 export class GitHubIntelligence {
@@ -41,153 +44,135 @@ export class GitHubIntelligence {
   }
 
   /**
-   * Processes new commits for a repository, extracts technical evidence,
-   * and saves the evidence to the database for future post generation.
+   * Fetches all commits since lastSyncAt for a repo and creates ONE daily summary.
+   * If the repo has never been synced, fetches the last 7 days.
    */
-  async analyzeRecentCommits(userId: string, repositoryId: string, owner: string, repo: string, since?: Date) {
-    console.log(`[GitHub Intelligence] Scanning ${owner}/${repo} for new commits...`);
-    
-    // 1. Fetch raw commits
-    const commits = await this.github.getRecentCommits(owner, repo, since);
-    
-    let evidenceCount = 0;
-    
-    // 2. Filter trivial commits
+  async analyzeRecentCommits(
+    userId: string,
+    repositoryId: string,
+    owner: string,
+    repo: string,
+    since?: Date
+  ): Promise<number> {
+    console.log(`[GitHub Intelligence] Scanning ${owner}/${repo} for today's work...`);
+
+    // If no since date, look back 7 days on first run
+    const sinceDate = since ?? new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    const commits = await this.github.getRecentCommits(owner, repo, sinceDate);
+
     const meaningfulCommits = commits.filter((c: any) => {
       const msg = c.commit.message;
-      return msg.length > 10 && !msg.includes("Merge pull request");
+      return (
+        msg.length > 10 &&
+        !msg.startsWith("Merge pull request") &&
+        !msg.startsWith("Merge branch")
+      );
     });
-    
-    if (meaningfulCommits.length === 0) return 0;
-    
-    // Reverse to process from oldest to newest so we can calculate gaps properly
-    const sortedCommits = meaningfulCommits.reverse();
 
-    // Group into batches based on continuous time (gap of 4+ hours = new batch)
-    const batches: any[][] = [];
-    let currentBatch: any[] = [];
-    let lastCommitTime: Date | null = null;
-    const GAP_HOURS = 24;
+    if (meaningfulCommits.length === 0) {
+      console.log(`[GitHub Intelligence] No meaningful commits since last sync.`);
+      return 0;
+    }
 
-    for (const c of sortedCommits) {
-      const commitTime = new Date(c.commit.author.date);
-      
-      if (!lastCommitTime) {
-        currentBatch.push(c);
-      } else {
-        const diffMs = commitTime.getTime() - lastCommitTime.getTime();
-        const diffHours = Math.abs(diffMs / (1000 * 60 * 60));
-        
-        if (diffHours >= GAP_HOURS) {
-          // Significant gap found, push current batch and start a new one
-          batches.push(currentBatch);
-          currentBatch = [c];
-        } else {
-          currentBatch.push(c);
-        }
+    console.log(`[GitHub Intelligence] Found ${meaningfulCommits.length} commits — generating daily summary...`);
+
+    // Build a combined commit log (all commits = one story)
+    const latestCommit = meaningfulCommits[0]; // GitHub returns newest first
+    const commitLog = meaningfulCommits
+      .map((c: any) =>
+        `• ${c.commit.message.split("\n")[0]} (${(c.files || []).map((f: any) => f.filename).join(", ")})`
+      )
+      .join("\n");
+
+    const today = new Date().toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" });
+
+    const prompt = `You are a technical writer creating a SINGLE daily summary for a developer's LinkedIn audience.
+
+Repository: ${owner}/${repo}
+Date: ${today}
+Total commits: ${meaningfulCommits.length}
+
+ALL commits from today's work session:
+${commitLog}
+
+Analyse ALL commits together and produce ONE cohesive summary of what was built today.
+If commits span a feature that's now complete, say so (isProjectComplete: true).
+Return JSON only, no markdown.`;
+
+    try {
+      const summary = await this.ai.routeStructured("simple", prompt, DailySummarySchema);
+
+      if (!summary.isSignificant || summary.storyType === "NONE") {
+        console.log(`[GitHub Intelligence] Work was not significant enough to report.`);
+        return 0;
       }
-      lastCommitTime = commitTime;
-    }
-    
-    if (currentBatch.length > 0) {
-      batches.push(currentBatch);
-    }
-    
-    for (const batch of batches) {
-      const latestCommit = batch[batch.length - 1]; // Because it is oldest to newest, last is latest
 
-      // Check if we already processed a batch ending with this commit
-      const existingActivity = await db.query.githubActivity.findFirst({
+      // Dedup — don't create a second candidate if we already processed this latest commit
+      const existing = await db.query.githubActivity.findFirst({
         where: and(
           eq(githubActivity.repositoryId, repositoryId),
           eq(githubActivity.externalId, latestCommit.sha)
-        )
+        ),
       });
-      
-      if (existingActivity) {
-        console.log(`[Truth Engine] Skipping already processed commit batch ending at ${latestCommit.sha}`);
-        continue;
+
+      if (existing) {
+        console.log(`[GitHub Intelligence] Today's summary already recorded.`);
+        return 0;
       }
 
-      const commitLog = batch.map((c: any) => 
-        `- SHA: ${c.sha}\n  Message: ${c.commit.message}\n  Files: ${(c.files || []).map((f: any) => f.filename).join(", ")}`
-      ).join("\n\n");
-      
-      const prompt = `
-You are a JSON-only API. Review the following batch of continuous recent commits and combine them to extract 1 to 3 MAJOR accomplishments, problems solved, or things built.
-Do not return a story for every single commit. Combine related commits to summarize what was actually built, the problem that was solved, or the milestone achieved.
+      // Persist activity
+      const [activity] = await db
+        .insert(githubActivity)
+        .values({
+          repositoryId,
+          activityType: "daily_summary",
+          externalId: latestCommit.sha,
+          message: summary.claim,
+          url: latestCommit.html_url,
+          activityDate: new Date(latestCommit.commit.author.date),
+        })
+        .returning();
 
-You MUST return a JSON object with exactly one key "stories", which is an array of objects matching this schema:
-{
-  "stories": [
-    {
-      "isSignificant": boolean,
-      "storyType": "PROBLEM_SOLUTION" | "ENGINEERING_LESSON" | "ARCHITECTURE" | "DEBUGGING" | "PERFORMANCE" | "DATA_QUALITY" | "MILESTONE" | "NONE",
-      "claim": string, // Detailed summary of what was actually built, the problem solved, or the milestone achieved across these commits. (e.g. "Built the multi-tenant auth system solving X problem")
-      "filesChanged": string[] // Key files changed
-    }
-  ]
-}
+      // Persist evidence
+      const [evidence] = await db
+        .insert(githubEvidence)
+        .values({
+          repositoryId,
+          activityId: activity.id,
+          claim: summary.narrative,
+          evidenceType: "source_code",
+          fileReferences: summary.keyFiles,
+        })
+        .returning();
 
-Commits Log:
-${commitLog}
-      `;
+      // Create content candidate so the content pipeline can draft a post
+      const candidateTitle = summary.isProjectComplete
+        ? `Project complete: ${summary.claim}`.substring(0, 200)
+        : `Today's build: ${summary.claim}`.substring(0, 200);
 
-      try {
-        const analysis = await this.ai.routeStructured('simple', prompt, EvidenceSchema);
-        
-        if (analysis.stories && Array.isArray(analysis.stories)) {
-          for (const story of analysis.stories) {
-            if (story.isSignificant && story.storyType !== "NONE") {
-              console.log(`[Truth Engine] Found combined evidence: ${story.claim}`);
-              
-              const [activity] = await db.insert(githubActivity).values({
-                repositoryId,
-                activityType: "commit_batch",
-                externalId: latestCommit.sha,
-                message: "Aggregated continuous work from multiple commits",
-                url: latestCommit.html_url,
-                activityDate: new Date(latestCommit.commit.author.date),
-              }).returning();
+      const alreadyExists = await db.query.contentCandidates.findFirst({
+        where: eq(contentCandidates.title, candidateTitle),
+      });
 
-              // 4. Save verified evidence linked to the activity
-              const [evidenceRecord] = await db.insert(githubEvidence).values({
-                repositoryId,
-                activityId: activity.id,
-                claim: story.claim,
-                evidenceType: "source_code",
-                fileReferences: story.filesChanged,
-              }).returning();
-
-              // 5. Create a content candidate for the pipeline to discover
-              // Prevent exact duplicates in candidates table by checking if claim exists
-              const existingCandidate = await db.query.contentCandidates.findFirst({
-                where: eq(contentCandidates.title, story.claim.substring(0, 100))
-              });
-
-              if (!existingCandidate) {
-                await db.insert(contentCandidates).values({
-                  userId,
-                  sourceType: "github",
-                  sourceId: evidenceRecord.id,
-                  title: story.claim.substring(0, 100),
-                  status: "IDEA",
-                  scoreEvidence: 75,
-                  scoreRelevance: 80,
-                  scoreFreshness: 70
-                });
-                evidenceCount++;
-              } else {
-                console.log(`[Truth Engine] Skipping duplicate content candidate for claim: ${story.claim.substring(0, 50)}...`);
-              }
-            }
-          }
-        }
-      } catch (error) {
-        console.error(`[Truth Engine] Failed to analyze commit batch:`, error);
+      if (!alreadyExists) {
+        await db.insert(contentCandidates).values({
+          userId,
+          sourceType: "github",
+          sourceId: evidence.id,
+          title: candidateTitle,
+          status: "IDEA",
+          scoreEvidence: summary.isProjectComplete ? 95 : 80,
+          scoreRelevance: 85,
+          scoreFreshness: 95,
+        });
+        console.log(`[GitHub Intelligence] Daily summary created: "${candidateTitle}"`);
+        return 1;
       }
-    }
 
-    return evidenceCount;
+      return 0;
+    } catch (error) {
+      console.error(`[GitHub Intelligence] Failed to generate daily summary:`, error);
+      return 0;
+    }
   }
 }
