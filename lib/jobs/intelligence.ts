@@ -33,8 +33,14 @@ export class JobIntelligence {
     const coreSkills = userProfile.coreSkills || ["TypeScript", "React"];
 
     // 2. Fetch jobs from an external source (Mocked for V2 MVP)
-    // In a real scenario, we'd use the provided Playwright integration to scrape LinkedIn/Indeed
-    const discoveredJobs = await this.fetchJobsFromSource(targetRoles[0], coreSkills[0]);
+    // We pass the new filters down to the fetcher
+    const discoveredJobs = await this.fetchJobsFromSource(
+      targetRoles[0], 
+      coreSkills[0],
+      userProfile.locationFilter?.[0] || "worldwide",
+      userProfile.salaryFilter?.[0] || "any",
+      userProfile.timeFilter || "any"
+    );
 
     let newJobsCount = 0;
 
@@ -92,31 +98,18 @@ export class JobIntelligence {
   /**
    * Simulates fetching jobs from an API or scraper.
    */
-  private async fetchJobsFromSource(role: string, skill: string) {
-    // Mock data representing what a Playwright scraper would return
-    return [
-      {
-        company: "Vercel",
-        title: `Senior ${role}`,
-        location: "San Francisco, CA",
-        remote: true,
-        salary: "$180k - $220k",
-        skills: [skill, "Next.js", "React", "Rust"],
-        url: `https://vercel.com/careers/${crypto.randomBytes(4).toString("hex")}`,
-        description: "We are looking for an experienced engineer to build the future of the web.",
-        postedAt: new Date().toISOString(),
-      },
-      {
-        company: "Stripe",
-        title: `Staff ${role}`,
-        location: "Seattle, WA",
-        remote: false,
-        salary: "UNKNOWN",
-        skills: [skill, "Ruby", "PostgreSQL"],
-        url: `https://stripe.com/jobs/${crypto.randomBytes(4).toString("hex")}`,
-        description: "Join our core payments team.",
-        postedAt: new Date().toISOString(),
-      }
-    ];
+  private async fetchJobsFromSource(role: string, skill: string, locationFilter: string, salaryFilter: string, timeFilter: string) {
+    // Generate a deterministic date based on today so we don't create infinitely many jobs, 
+    // but we do show fresh ones on a new day.
+    const todayStr = new Date().toISOString().split('T')[0];
+    
+    // Adjust mock data to visually reflect the user's filters
+    const mockLocation = locationFilter !== "worldwide" && locationFilter !== "any" ? locationFilter : "San Francisco, CA";
+    const mockSalary = salaryFilter !== "any" ? salaryFilter : "$180k - $220k";
+
+    // Fake data generation removed per user request.
+    // In production, integrate with a real Job Board API (e.g. LinkedIn, Greenhouse) here.
+    return [];
   }
 }
+
