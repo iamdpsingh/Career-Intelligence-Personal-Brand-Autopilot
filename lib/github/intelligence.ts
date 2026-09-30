@@ -67,7 +67,7 @@ export class GitHubIntelligence {
     const batches: any[][] = [];
     let currentBatch: any[] = [];
     let lastCommitTime: Date | null = null;
-    const GAP_HOURS = 4;
+    const GAP_HOURS = 24;
 
     for (const c of sortedCommits) {
       const commitTime = new Date(c.commit.author.date);
