@@ -8,6 +8,7 @@ import { TechIntelligence } from "../tech/intelligence";
 import { ContentDecisionEngine } from "../content/decision";
 import { ContentGenerator } from "../content/generator";
 import { AICostController, type AIProvider } from "../ai/provider";
+import { GroqProvider } from "../ai/groq";
 
 
 // ----------------------------------------------------------------------
@@ -158,8 +159,13 @@ export async function runFullCycle(trigger: "local-daemon" | "vercel-cron" | "ma
   const user = await db.query.users.findFirst();
   const userId = user?.id || "system";
 
-  const fastProvider = new StubAIProvider();
-  const smartProvider = new StubAIProvider();
+  const groqKey = process.env.GROQ_API_KEY;
+  if (!groqKey) {
+    throw new Error("GROQ_API_KEY is missing in .env");
+  }
+
+  const fastProvider = new GroqProvider(groqKey, "openai/gpt-oss-20b");
+  const smartProvider = new GroqProvider(groqKey, "openai/gpt-oss-120b");
   const aiController = new AICostController(fastProvider, smartProvider);
 
   // --- PIPELINE 1: GITHUB INTELLIGENCE (Spec Point 6) ---
