@@ -29,11 +29,11 @@ export class GitHubClient {
       ),
     });
 
-    if (!creds) {
-      throw new Error(`No active GitHub credentials found for user ${this.userId}`);
+    if (!creds && !process.env.GITHUB_TOKEN) {
+      throw new Error(`No active GitHub credentials found for user ${this.userId} and no GITHUB_TOKEN in .env`);
     }
 
-    return creds.accessToken;
+    return creds?.accessToken || process.env.GITHUB_TOKEN!;
   }
 
   /**

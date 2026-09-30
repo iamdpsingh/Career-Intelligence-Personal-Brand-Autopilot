@@ -41,17 +41,17 @@ jobs:
         run: npm install --legacy-peer-deps
       - name: Push DB Schema
         env:
-          DATABASE_URL: file:./local.db
+          DATABASE_URL: ./local.db
         run: npx drizzle-kit push --force
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps
       - name: Run Build
         env:
-          DATABASE_URL: file:./local.db
+          DATABASE_URL: ./local.db
         run: npm run build
       - name: Run Playwright Tests
         env:
-          DATABASE_URL: file:./local.db
+          DATABASE_URL: ./local.db
         run: npx playwright test
 
   load-test:
@@ -75,11 +75,11 @@ jobs:
         run: npm install --legacy-peer-deps
       - name: Push DB Schema
         env:
-          DATABASE_URL: file:./local.db
+          DATABASE_URL: ./local.db
         run: npx drizzle-kit push --force
       - name: Build & Start App
         env:
-          DATABASE_URL: file:./local.db
+          DATABASE_URL: ./local.db
         run: |
           npm run build
           npm run start &
