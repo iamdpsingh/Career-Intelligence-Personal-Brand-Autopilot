@@ -4,8 +4,9 @@ import dns from "node:dns";
 import util from "node:util";
 import * as dotenv from "dotenv";
 
-// Load .env.local for local development
+// Load environment variables (.env.local first, then fallback to .env)
 dotenv.config({ path: ".env.local" });
+dotenv.config({ path: ".env" });
 
 const resolve = util.promisify(dns.resolve);
 
