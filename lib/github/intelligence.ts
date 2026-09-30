@@ -3,7 +3,7 @@ import { AICostController } from "../ai/provider";
 import { z } from "zod";
 import { db } from "@/providers/db";
 import { githubActivity, githubEvidence, contentCandidates } from "@/providers/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 
 // ----------------------------------------------------------------------
 // GITHUB TRUTH ENGINE (Rules 06, 07, 08)
@@ -60,17 +60,61 @@ export class GitHubIntelligence {
     
     if (meaningfulCommits.length === 0) return 0;
     
-    // Group into batches of 20 to avoid context limits
-    const BATCH_SIZE = 20;
-    for (let i = 0; i < meaningfulCommits.length; i += BATCH_SIZE) {
-      const batch = meaningfulCommits.slice(i, i + BATCH_SIZE);
+    // Reverse to process from oldest to newest so we can calculate gaps properly
+    const sortedCommits = meaningfulCommits.reverse();
+
+    // Group into batches based on continuous time (gap of 4+ hours = new batch)
+    const batches: any[][] = [];
+    let currentBatch: any[] = [];
+    let lastCommitTime: Date | null = null;
+    const GAP_HOURS = 4;
+
+    for (const c of sortedCommits) {
+      const commitTime = new Date(c.commit.author.date);
       
+      if (!lastCommitTime) {
+        currentBatch.push(c);
+      } else {
+        const diffMs = commitTime.getTime() - lastCommitTime.getTime();
+        const diffHours = Math.abs(diffMs / (1000 * 60 * 60));
+        
+        if (diffHours >= GAP_HOURS) {
+          // Significant gap found, push current batch and start a new one
+          batches.push(currentBatch);
+          currentBatch = [c];
+        } else {
+          currentBatch.push(c);
+        }
+      }
+      lastCommitTime = commitTime;
+    }
+    
+    if (currentBatch.length > 0) {
+      batches.push(currentBatch);
+    }
+    
+    for (const batch of batches) {
+      const latestCommit = batch[batch.length - 1]; // Because it is oldest to newest, last is latest
+
+      // Check if we already processed a batch ending with this commit
+      const existingActivity = await db.query.githubActivity.findFirst({
+        where: and(
+          eq(githubActivity.repositoryId, repositoryId),
+          eq(githubActivity.externalId, latestCommit.sha)
+        )
+      });
+      
+      if (existingActivity) {
+        console.log(`[Truth Engine] Skipping already processed commit batch ending at ${latestCommit.sha}`);
+        continue;
+      }
+
       const commitLog = batch.map((c: any) => 
         `- SHA: ${c.sha}\n  Message: ${c.commit.message}\n  Files: ${(c.files || []).map((f: any) => f.filename).join(", ")}`
       ).join("\n\n");
       
       const prompt = `
-You are a JSON-only API. Review the following batch of recent commits and combine them to extract 1 to 3 MAJOR accomplishments, problems solved, or things built.
+You are a JSON-only API. Review the following batch of continuous recent commits and combine them to extract 1 to 3 MAJOR accomplishments, problems solved, or things built.
 Do not return a story for every single commit. Combine related commits to summarize what was actually built, the problem that was solved, or the milestone achieved.
 
 You MUST return a JSON object with exactly one key "stories", which is an array of objects matching this schema:
@@ -97,13 +141,11 @@ ${commitLog}
             if (story.isSignificant && story.storyType !== "NONE") {
               console.log(`[Truth Engine] Found combined evidence: ${story.claim}`);
               
-              // 3. Save a synthetic raw activity representing the latest commit in this batch
-              const latestCommit = batch[0];
               const [activity] = await db.insert(githubActivity).values({
                 repositoryId,
                 activityType: "commit_batch",
                 externalId: latestCommit.sha,
-                message: "Aggregated work from multiple commits",
+                message: "Aggregated continuous work from multiple commits",
                 url: latestCommit.html_url,
                 activityDate: new Date(latestCommit.commit.author.date),
               }).returning();
@@ -118,18 +160,26 @@ ${commitLog}
               }).returning();
 
               // 5. Create a content candidate for the pipeline to discover
-              await db.insert(contentCandidates).values({
-                userId,
-                sourceType: "github",
-                sourceId: evidenceRecord.id,
-                title: story.claim.substring(0, 100),
-                status: "IDEA",
-                scoreEvidence: 75,
-                scoreRelevance: 80,
-                scoreFreshness: 70
+              // Prevent exact duplicates in candidates table by checking if claim exists
+              const existingCandidate = await db.query.contentCandidates.findFirst({
+                where: eq(contentCandidates.title, story.claim.substring(0, 100))
               });
 
-              evidenceCount++;
+              if (!existingCandidate) {
+                await db.insert(contentCandidates).values({
+                  userId,
+                  sourceType: "github",
+                  sourceId: evidenceRecord.id,
+                  title: story.claim.substring(0, 100),
+                  status: "IDEA",
+                  scoreEvidence: 75,
+                  scoreRelevance: 80,
+                  scoreFreshness: 70
+                });
+                evidenceCount++;
+              } else {
+                console.log(`[Truth Engine] Skipping duplicate content candidate for claim: ${story.claim.substring(0, 50)}...`);
+              }
             }
           }
         }
