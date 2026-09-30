@@ -81,6 +81,13 @@ export class ContentGenerator {
       
       Determine the best angle for a technical post. Avoid generic hype.
       Focus on Problem -> Solution or Technical Lessons learned.
+
+      You MUST return ONLY a valid JSON object matching this exact schema:
+      {
+        "hook": "string (A technical, non-clickbaity opening line.)",
+        "coreMessage": "string (The primary technical takeaway or lesson.)",
+        "structure": ["string (Bullet points outlining the flow of the post.)"]
+      }
     `;
     const angle = await this.ai.routeStructured('complex', anglePrompt, StoryAngleSchema);
 
@@ -102,6 +109,11 @@ export class ContentGenerator {
       - DO NOT invent production metrics (e.g., "improved speed by 50%") unless in the evidence.
       - DO NOT invent personal feelings (e.g., "I'm thrilled to announce").
       - Keep sentences short. Use technical terminology accurately.
+
+      You MUST return ONLY a valid JSON object matching this exact schema:
+      {
+        "post": "string (The complete text of the drafted post)"
+      }
     `;
     // Text-only generation doesn't need Zod, but requires a complex model for good prose.
     let draftText = await this.ai.routeStructured('complex', draftPrompt, z.object({ post: z.string() })).then(res => res.post);
@@ -117,6 +129,14 @@ export class ContentGenerator {
       Draft: ${draftText}
       
       Does the draft invent any facts? Is it overly promotional?
+
+      You MUST return ONLY a valid JSON object matching this exact schema:
+      {
+        "isFactual": "boolean (Does the draft strictly adhere to the provided evidence without inventing details?)",
+        "hallucinationsFound": ["string (List of any fabricated claims found, or empty if none)"],
+        "brandVoiceCompliant": "boolean (Is the tone technical, humble, and professional?)",
+        "suggestedRevisions": "string (Specific instructions for fixing tone or facts if needed, or empty)"
+      }
     `;
     const review = await this.ai.routeStructured('complex', reviewPrompt, DraftReviewSchema);
 
@@ -133,6 +153,11 @@ export class ContentGenerator {
         
         Original Draft: ${draftText}
         Ensure no facts are invented.
+
+        You MUST return ONLY a valid JSON object matching this exact schema:
+        {
+          "post": "string (The complete text of the revised drafted post)"
+        }
       `;
       draftText = await this.ai.routeStructured('complex', revisionPrompt, z.object({ post: z.string() })).then(res => res.post);
     }
