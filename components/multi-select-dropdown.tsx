@@ -46,7 +46,7 @@ export function MultiSelectDropdown({
       </div>
 
       {isOpen && (
-        <div className="absolute z-10 w-full md:w-64 mt-2 py-2 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl shadow-2xl max-h-60 overflow-y-auto">
+        <div className="absolute z-50 w-full md:w-64 mt-2 py-2 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl shadow-2xl max-h-60 overflow-y-auto">
           {options.length === 0 ? (
             <div className="px-4 py-2 text-sm text-zinc-500">No options available</div>
           ) : (
