@@ -10,5 +10,6 @@ import path from "path";
  */
 const dbPath = process.env.DATABASE_URL?.replace('sqlite://', '').replace('file:', '') || path.join(process.cwd(), "local.db");
 const sqlite = new Database(dbPath);
+sqlite.pragma('journal_mode = WAL');
 
 export const db = drizzle(sqlite, { schema });

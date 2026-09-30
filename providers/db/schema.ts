@@ -57,6 +57,11 @@ export const profiles = sqliteTable("profiles", {
   coreSkills: text("core_skills", { mode: "json" }).$type<string[]>(),
   cloudSkills: text("cloud_skills", { mode: "json" }).$type<string[]>(),
   targetExperience: text("target_experience", { mode: "json" }).$type<string[]>(),
+  experienceLevel: text("experience_level", { mode: "json" }).$type<string[]>(),
+  timeFilter: text("time_filter"),
+  locationFilter: text("location_filter", { mode: "json" }).$type<string[]>(),
+  salaryFilter: text("salary_filter", { mode: "json" }).$type<string[]>(),
+  currency: text("currency", { mode: "json" }).$type<string[]>(),
   updatedAt: integer("updated_at", { mode: "timestamp_ms" }).$defaultFn(() => new Date()).notNull(),
 });
 
@@ -71,6 +76,7 @@ export const jobs = sqliteTable("jobs", {
   jobUrl: text("job_url").notNull().unique(),
   postedAt: integer("posted_at", { mode: "timestamp_ms" }),
   description: text("description"),
+  visited: integer("visited", { mode: "boolean" }).default(false),
   createdAt: integer("created_at", { mode: "timestamp_ms" }).$defaultFn(() => new Date()).notNull(),
 });
 

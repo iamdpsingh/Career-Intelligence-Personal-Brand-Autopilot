@@ -48,3 +48,8 @@ next-env.d.ts
 # testing reports
 /playwright-report
 /test-results
+
+local.db
+local.db-shm
+local.db-wal
+test-db.ts
