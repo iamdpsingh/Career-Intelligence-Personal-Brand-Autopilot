@@ -60,9 +60,27 @@ export class GitHubIntelligence {
 
       // 2. Ask AI if this commit is a valuable story (Simple Extraction - Cheaper Model)
       const prompt = `
-        Analyze this GitHub commit. Does it represent a significant engineering story?
-        Commit Message: ${message}
-        Files Changed: ${files.join(", ")}
+You are a JSON-only API. You MUST return a JSON object with EXACTLY these four keys: "isSignificant", "storyType", "claim", and "filesChanged". 
+Do not add any other keys like "significantEngineeringStory", "analysis", or "reason".
+
+If the commit is not significant, return:
+{
+  "isSignificant": false,
+  "storyType": "NONE",
+  "claim": "Not significant",
+  "filesChanged": []
+}
+
+Schema definition:
+{
+  "isSignificant": boolean, // Does this commit represent a meaningful architectural change, bug fix, or feature?
+  "storyType": "PROBLEM_SOLUTION" | "ENGINEERING_LESSON" | "ARCHITECTURE" | "DEBUGGING" | "PERFORMANCE" | "DATA_QUALITY" | "MILESTONE" | "NONE",
+  "claim": string, // What exactly was built or fixed?
+  "filesChanged": string[] // The specific files that prove this claim.
+}
+
+Commit Message: ${message}
+Files Changed: ${files.join(", ")}
       `;
 
       try {

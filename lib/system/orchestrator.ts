@@ -90,8 +90,16 @@ export async function runFullCycle(trigger: "local-daemon" | "vercel-cron" | "ma
   const user = await db.query.users.findFirst();
   const userId = user?.id || "system";
 
-  // Set up AI (use stub if no keys configured)
-  const aiProvider = new StubAIProvider();
+  let aiProvider: AIProvider;
+  if (process.env.GROQ_API_KEY) {
+    const { GroqProvider } = require("../ai/groq");
+    aiProvider = new GroqProvider(process.env.GROQ_API_KEY);
+  } else if (process.env.OPENAI_API_KEY) {
+    const { OpenAIProvider } = require("../ai/openai");
+    aiProvider = new OpenAIProvider(process.env.OPENAI_API_KEY);
+  } else {
+    aiProvider = new StubAIProvider();
+  }
   const aiController = new AICostController(aiProvider, aiProvider);
 
   // --- PIPELINE 1: GITHUB INTELLIGENCE (Spec Point 6) ---
@@ -101,9 +109,24 @@ export async function runFullCycle(trigger: "local-daemon" | "vercel-cron" | "ma
     const githubIntel = new GitHubIntelligence(githubClient, aiController);
 
     // Fetch all tracked repositories for this user
-    const repos = await db.query.repositories.findMany({
+    let repos = await db.query.repositories.findMany({
       where: eq(repositories.userId, userId),
     });
+
+    if (repos.length === 0) {
+      console.log(`[Orchestrator] Auto-tracking iamdpsingh/Career-Intelligence-Personal-Brand-Autopilot...`);
+      // Ensure user exists for foreign key constraint
+      const existingUser = await db.query.users.findFirst({ where: eq(users.id, userId) });
+      if (!existingUser) {
+        await db.insert(users).values({ id: userId, email: "system@localhost" });
+      }
+      const [newRepo] = await db.insert(repositories).values({
+        userId,
+        name: "iamdpsingh/Career-Intelligence-Personal-Brand-Autopilot",
+        description: "Default repository",
+      }).returning();
+      repos = [newRepo];
+    }
 
     let totalEvidence = 0;
     for (const repo of repos) {

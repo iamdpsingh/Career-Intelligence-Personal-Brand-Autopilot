@@ -22,8 +22,12 @@ jobs:
       - name: Run Linter
         run: npm run lint
       - name: Run Unit Tests with Coverage
+        env:
+          DATABASE_URL: ./local.db
         run: npx vitest run --coverage
       - name: Run Build
+        env:
+          DATABASE_URL: ./local.db
         run: npm run build
 
   e2e-and-a11y-test:
